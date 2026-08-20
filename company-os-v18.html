@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Company OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cairo:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Dark by default — Stripe's blurple accent on a clean, confident dark
+       canvas. Flat surfaces, no glow blobs, no heavy gradients. */
+    --bg:#0A0E17; --bg2:#0F1420; --surface:#12172244; --surface-2:#1A2030;
+    --border:#232A3B; --border-soft:#1C2230;
+    --text:#F5F7FA; --text-dim:#9BA4B5; --text-faint:#6B7385;
+    --indigo:#7A73FF; --violet:#7A73FF; --cyan:#3DDBFF;
+    --grad-primary:#7A73FF;
+    --grad-cyan:linear-gradient(135deg,#7A73FF,#3DDBFF);
+    --signal:#2ED197; --signal-bg:rgba(46,209,151,.14);
+    --amber:#FFB020; --amber-bg:rgba(255,176,32,.14);
+    --red:#FF5A72; --red-bg:rgba(255,90,114,.14);
+    --indigo-bg:rgba(122,115,255,.15);
+    --shadow-glow:0 0 0 1px rgba(255,255,255,.06), 0 20px 44px -14px rgba(0,0,0,.55);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    --r-card:12px; --r-sm:8px;
+
+    /* Back-compat aliases so every existing component inherits this theme automatically */
+    --ink:var(--text); --paper:var(--bg);
+    --slate:var(--text-dim); --slate-50:#161B28; --slate-100:#1A2030;
+    --slate-200:var(--border); --slate-400:var(--text-faint);
+    --indigo-50:var(--indigo-bg); --indigo-700:#9992FF;
+    --signal-50:var(--signal-bg); --amber-50:var(--amber-bg); --red-50:var(--red-bg);
+    --shadow-md:var(--shadow-glow); --shadow-lg:var(--shadow-glow);
+  }
+  html.light{
+    --bg:#F6F9FC; --bg2:#FFFFFF; --surface:#FFFFFF; --surface-2:#F6F9FC;
+    --border:#E3E8EE; --border-soft:#EDF1F5;
+    --text:#1A1F36; --text-dim:#697386; --text-faint:#8792A2;
+    --shadow-glow:0 1px 1px rgba(26,31,54,.06), 0 8px 24px -6px rgba(26,31,54,.14);
+  }
+  html.light .card, html.light .sidebar, html.light .topbar, html.light .ai-panel, html.light .palette-box, html.light .notif-dropdown{backdrop-filter:none;}
+  html.light .sidebar, html.light .topbar, html.light .ai-panel{background:#FFFFFF;}
+  html.light .palette-box, html.light .notif-dropdown{background:#FFFFFF;}
+
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'IBM Plex Sans Arabic',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden;}
+  h1,h2,h3{font-family:Cairo,sans-serif; margin:0; color:var(--text);}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  ::-webkit-scrollbar{width:6px; height:6px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12); border-radius:8px;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .fade{animation:fadeUp .3s ease-out both;}
+  @keyframes breathe{0%,100%{opacity:.55;}50%{opacity:1;}}
+  .breathe{animation:breathe 2.4s ease-in-out infinite;}
+
+  .app{display:flex; height:100vh; width:100vw;}
+
+  /* ===== SIDEBAR — labeled workspace tree, not icon rail ===== */
+  .sidebar{width:260px; flex-shrink:0; background:rgba(15,17,23,.7); backdrop-filter:blur(20px); border-left:1px solid var(--border); display:flex; flex-direction:column; height:100vh;}
+  .sidebar-header{padding:20px 18px 14px; display:flex; align-items:center; gap:10px;}
+  .sidebar-logo{width:32px; height:32px; border-radius:10px; background:linear-gradient(135deg,#4F46E5,#8B5CF6); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; font-size:12px; flex-shrink:0; box-shadow:var(--shadow-sm);}
+  .sidebar-org{font-size:14px; font-weight:700; font-family:Cairo;}
+  .sidebar-scroll{flex:1; overflow-y:auto; padding:6px 14px;}
+  .nav-group{margin-bottom:2px;}
+  .nav-item{display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:12px; font-size:13.5px; color:var(--text-dim); cursor:pointer; user-select:none; font-weight:500; transition:.12s;}
+  .nav-item:hover{background:var(--slate-50);}
+  .nav-item.active{background:var(--grad-primary); color:#fff; box-shadow:0 4px 16px -4px rgba(99,102,241,.5);}
+  .nav-item .ico{width:18px; text-align:center; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .nav-item .chev{margin-right:auto; font-size:9px; color:var(--slate-400); transition:transform .15s;}
+  .nav-item.active .chev{color:rgba(255,255,255,.5);}
+  .nav-item .chev.open{transform:rotate(90deg);}
+  .nav-children{padding-right:16px; max-height:0; overflow:hidden; transition:max-height .2s ease;}
+  .nav-children.open{max-height:400px; padding-top:2px; padding-bottom:4px;}
+  .nav-child{display:flex; align-items:center; gap:9px; padding:7px 12px; border-radius:10px; font-size:12.5px; color:var(--slate); cursor:pointer; font-weight:500;}
+  .nav-child:hover{background:var(--slate-50); color:var(--ink);}
+  .nav-child.active{color:var(--indigo-700); font-weight:700; background:var(--indigo-50);}
+  .nav-child .dot{width:5px; height:5px; border-radius:50%; background:var(--slate-400); flex-shrink:0;}
+  .nav-sep{height:1px; background:var(--slate-100); margin:12px 4px;}
+  .nav-eyebrow{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--slate-400); font-weight:700; padding:14px 12px 6px;}
+  .sidebar-footer{padding:14px 16px; border-top:1px solid var(--slate-100); display:flex; align-items:center; gap:10px;}
+  .avatar{width:32px;height:32px;border-radius:10px; display:flex;align-items:center;justify-content:center; color:#fff; font-size:12px; font-weight:700; flex-shrink:0; box-shadow:var(--shadow-sm);}
+
+  /* ===== MAIN COLUMN ===== */
+  .main{flex:1; display:flex; flex-direction:column; min-width:0; height:100vh;}
+  .topbar{height:60px; flex-shrink:0; border-bottom:1px solid var(--border); background:rgba(15,17,23,.55); backdrop-filter:blur(20px); display:flex; align-items:center; justify-content:space-between; padding:0 24px;}
+  .breadcrumb{font-size:13px; color:var(--slate); display:flex; align-items:center; gap:7px; font-weight:500;}
+  .breadcrumb .seg{cursor:pointer;}
+  .breadcrumb .seg:hover{color:var(--ink);}
+  .breadcrumb .seg.current{color:var(--ink); font-weight:700; cursor:default;}
+  .breadcrumb .sep{color:var(--slate-400);}
+  .top-actions{display:flex; align-items:center; gap:8px;}
+  .icon-btn{width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:var(--slate); cursor:pointer; position:relative; background:var(--slate-50); transition:.12s;}
+  .icon-btn:hover{background:var(--slate-100); color:var(--ink);}
+  .dot-badge{position:absolute; top:6px; left:7px; width:6px; height:6px; border-radius:50%; background:var(--red); border:2px solid #fff;}
+
+  .body-row{display:flex; flex:1; min-height:0;}
+  .content{flex:1; min-width:0; overflow-y:auto; background:var(--paper);}
+
+  .ai-panel{width:320px; flex-shrink:0; border-right:1px solid var(--border); background:rgba(15,17,23,.7); backdrop-filter:blur(20px); display:flex; flex-direction:column; transition:margin-right .2s;}
+  .ai-panel.collapsed{margin-right:-320px;}
+  .ai-header{padding:16px 18px; border-bottom:1px solid var(--slate-200); display:flex; align-items:center; gap:10px;}
+  .ai-orb{width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#4F46E5,#8B5CF6); flex-shrink:0; box-shadow:0 0 0 4px var(--indigo-50);}
+  .ai-body{flex:1; overflow-y:auto; padding:16px 18px;}
+  .ai-section-title{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--slate-400); font-weight:700; margin:18px 0 8px;}
+  .ai-section-title:first-child{margin-top:0;}
+  .ai-card{background:var(--slate-50); border-radius:14px; padding:12px 14px; margin-bottom:8px; font-size:12.5px; line-height:1.6;}
+  .ai-card.alert{background:var(--amber-50);}
+  .ai-card.critical{background:var(--red-50);}
+  .ai-input-row{border-top:1px solid var(--slate-200); padding:12px; display:flex; gap:8px;}
+  .ai-input{flex:1; border:1px solid var(--slate-200); border-radius:11px; padding:9px 13px; font-size:12.5px; font-family:inherit; background:var(--slate-50);}
+  .ai-input:focus{outline:none; border-color:var(--indigo); background:rgba(255,255,255,.06);}
+  .send-btn{width:34px; height:34px; border-radius:11px; background:var(--grad-primary); color:#fff; border:none; cursor:pointer; flex-shrink:0;}
+
+  .topbar-search{flex:1; max-width:360px; height:38px; border-radius:11px; background:var(--slate-50); border:1px solid transparent; display:flex; align-items:center; gap:8px; padding:0 12px; color:var(--slate-400); font-size:12.5px;}
+  .topbar-search kbd{margin-right:auto; font-size:10px; background:rgba(255,255,255,.08); border:1px solid var(--border); border-radius:5px; padding:1px 6px; color:var(--text-faint);}
+
+  .card{background:var(--surface); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--r-card); padding:18px; box-shadow:var(--shadow-sm); transition:box-shadow .15s, transform .15s, border-color .15s;}
+  .card.hoverable:hover{box-shadow:var(--shadow-md); transform:translateY(-1px); cursor:pointer;}
+  .badge{font-size:10.5px; padding:4px 10px; border-radius:999px; font-weight:700; display:inline-block;}
+  .b-success{background:var(--signal-50); color:var(--signal);}
+  .b-warning{background:var(--amber-50); color:#B45309;}
+  .b-info{background:var(--indigo-50); color:var(--indigo);}
+  .b-critical{background:var(--red-50); color:var(--red);}
+  .b-neutral{background:var(--slate-100); color:var(--slate);}
+
+  .btn{border:none; border-radius:11px; padding:8px 15px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:.12s;}
+  .btn-primary{background:var(--grad-primary); color:#fff; box-shadow:0 4px 16px -4px rgba(99,102,241,.5);}
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-ghost{background:var(--surface-2); color:var(--text-dim); border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--ink); color:var(--ink);}
+
+  .grid{display:grid; gap:14px;}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .g2{grid-template-columns:repeat(2,1fr);}
+  @media(max-width:1150px){.g4{grid-template-columns:repeat(2,1fr);} .g3{grid-template-columns:repeat(2,1fr);}}
+
+  .icon-chip{width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .kpi-value{font-family:'Space Grotesk'; font-size:24px; font-weight:700; margin-top:2px; letter-spacing:-.01em;}
+  .kpi-label{font-size:11.5px; color:var(--slate); font-weight:500;}
+  .kpi-trend{font-size:11px; font-weight:700; padding:2px 7px; border-radius:999px;}
+  .bar-track{height:7px; border-radius:99px; background:var(--slate-100); overflow:hidden;}
+  .bar-fill{height:100%; border-radius:99px; background:var(--indigo);}
+  .row-item{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--slate-100);}
+  .row-item:last-child{border-bottom:none;}
+  .avatar-sm{width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; color:#fff; flex-shrink:0; box-shadow:var(--shadow-sm);}
+
+  .accent-card{border:none; box-shadow:none;}
+  .accent-lime{background:rgba(52,211,153,.12);} .accent-lilac{background:rgba(168,85,247,.14);} .accent-peach{background:rgba(251,191,36,.12);} .accent-sky{background:rgba(34,211,238,.12);}
+
+  .page-header{padding:26px 30px 0;}
+  .page-title{font-size:22px; font-weight:800; font-family:Cairo; letter-spacing:-.01em;}
+  .page-sub{font-size:12.5px; color:var(--slate); margin-top:4px;}
+  .tab-row{display:flex; gap:4px; margin-top:18px; border-bottom:1px solid var(--slate-200);}
+  .tab-btn{padding:10px 15px; font-size:12.5px; font-weight:600; background:none; border:none; border-bottom:2px solid transparent; color:var(--slate); cursor:pointer; font-family:inherit;}
+  .tab-btn.active{border-color:var(--ink); color:var(--ink);}
+  .page-body{padding:22px 30px 44px;}
+
+  /* ===== Collaboration Hub ===== */
+  .hub-wrap{display:flex; flex-direction:column; height:calc(100vh - 60px);}
+  .hub-header{padding:16px 26px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0;}
+  .hub-title{font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px;}
+  .hub-meta{font-size:11.5px; color:var(--text-faint); margin-top:2px;}
+  .hub-messages{flex:1; overflow-y:auto; padding:18px 26px; display:flex; flex-direction:column; gap:14px;}
+  .msg-row{display:flex; gap:10px; max-width:640px;}
+  .msg-avatar{width:32px; height:32px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff;}
+  .msg-author{font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px;}
+  .msg-time{font-size:10.5px; color:var(--text-faint); font-weight:400;}
+  .msg-bubble{background:var(--surface); border:1px solid var(--border-soft); border-radius:14px; padding:10px 13px; font-size:13px; line-height:1.7; margin-top:4px; color:var(--text);}
+  .msg-bubble.ai{background:linear-gradient(135deg, rgba(99,102,241,.12), rgba(168,85,247,.1)); border-color:rgba(168,85,247,.25);}
+  .msg-task-chip{display:inline-flex; align-items:center; gap:6px; background:rgba(52,211,153,.12); border:1px solid rgba(52,211,153,.25); color:var(--signal); font-size:11px; padding:4px 10px; border-radius:8px; margin-top:8px;}
+  .msg-thread-link{font-size:11px; color:#A5B4FC; margin-top:6px; cursor:pointer;}
+
+  /* Per-message hover action toolbar */
+  .msg-row{position:relative;}
+  .msg-actions{position:absolute; top:-14px; left:44px; display:none; align-items:center; gap:1px; background:var(--surface); border:1px solid var(--border); border-radius:9px; box-shadow:var(--shadow-glow); padding:3px;}
+  .msg-row:hover .msg-actions{display:flex;}
+  .msg-action-btn{width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12.5px; cursor:pointer; color:var(--text-dim);}
+  .msg-action-btn:hover{background:var(--surface-2); color:var(--text);}
+  .hub-composer{border-top:1px solid var(--border); padding:14px 26px; flex-shrink:0;}
+  .composer-box{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:10px 12px;}
+  .composer-input{width:100%; background:transparent; border:none; color:var(--text); font-size:13px; font-family:inherit; outline:none;}
+  .composer-toolbar{display:flex; align-items:center; gap:6px; margin-top:8px;}
+  .composer-icon{width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text-faint); cursor:pointer;}
+  .composer-icon:hover{background:var(--surface-2); color:var(--text);}
+  .lock-badge{font-size:10px; padding:2px 7px; border-radius:6px; background:rgba(251,191,36,.14); color:var(--amber); font-weight:700;}
+
+  /* ===== Command Palette ===== */
+  .palette-overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(4px); z-index:100; align-items:flex-start; justify-content:center; padding-top:12vh;}
+  .palette-overlay.open{display:flex;}
+  .palette-box{width:100%; max-width:560px; background:#14161C; border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow-glow); overflow:hidden;}
+  .palette-input-row{display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--border); color:var(--text-faint);}
+  .palette-input{flex:1; background:transparent; border:none; color:var(--text); font-size:14px; font-family:inherit; outline:none;}
+  .palette-input-row kbd{font-size:10px; background:rgba(255,255,255,.08); border:1px solid var(--border); border-radius:5px; padding:2px 6px; color:var(--text-faint);}
+  .palette-results{max-height:360px; overflow-y:auto; padding:8px;}
+  .palette-group{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-faint); font-weight:700; padding:10px 10px 4px;}
+  .palette-item{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; cursor:pointer; font-size:13px;}
+  .palette-item:hover{background:var(--surface-2);}
+  .palette-item .ico{width:16px; color:var(--text-faint);}
+
+  /* ===== Notifications ===== */
+  .notif-dropdown{display:none; position:absolute; top:44px; left:-8px; width:320px; background:#14161C; border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow-glow); z-index:60; overflow:hidden;}
+  .notif-dropdown.open{display:block;}
+  .notif-header{padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px; font-weight:700; text-align:right;}
+  .notif-item{display:flex; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border-soft); text-align:right; cursor:pointer;}
+  .notif-item:hover{background:var(--surface-2);}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-ico{width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:13px;}
+
+  /* ===== Peek Panel (slide-over) ===== */
+  .peek-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:70; opacity:0; pointer-events:none; transition:opacity .18s;}
+  .peek-backdrop.open{opacity:1; pointer-events:auto;}
+  .peek-panel{position:fixed; top:0; left:0; height:100vh; width:400px; max-width:90vw; background:#14161C; border-left:1px solid var(--border); box-shadow:var(--shadow-glow); z-index:71; transform:translateX(-100%); transition:transform .22s ease; display:flex; flex-direction:column;}
+  .peek-panel.open{transform:translateX(0);}
+  .peek-header{padding:16px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px;}
+  .peek-body{flex:1; overflow-y:auto; padding:16px 18px;}
+  .peek-footer{padding:14px 18px; border-top:1px solid var(--border);}
+
+  /* ===== Workspace Tab Bar ===== */
+  .ws-tabbar{display:flex; align-items:center; gap:4px; padding:8px 20px 0; border-bottom:1px solid var(--border); overflow-x:auto; flex-shrink:0;}
+  .ws-tab{display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px 10px 0 0; font-size:12.5px; cursor:pointer; white-space:nowrap; color:var(--text-faint); border:1px solid transparent; border-bottom:none;}
+  .ws-tab.active{background:var(--surface); color:var(--text); border-color:var(--border);}
+  .ws-tab .ws-close{opacity:.5; font-size:11px;}
+  .ws-tab .ws-close:hover{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ============ BOOT: LOGIN ============ -->
+<div id="boot-login" style="min-height:100vh; display:flex; align-items:center; justify-content:center; position:relative;">
+  <div class="fade" style="width:100%; max-width:380px; padding:0 20px;">
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:28px;">
+      <div class="sidebar-logo" style="width:44px; height:44px; border-radius:14px; font-size:16px; margin-bottom:14px;">OS</div>
+      <div style="font-size:19px; font-weight:800; font-family:Cairo;">Company OS</div>
+      <div style="font-size:12.5px; color:var(--text-dim); margin-top:4px;">سجّل دخولك عشان تدخل غرفة تحكم شركتك</div>
+    </div>
+    <div class="card" style="padding:22px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11.5px; color:var(--text-dim); display:block; margin-bottom:6px;">البريد الإلكتروني</label>
+        <input id="login-email" type="email" value="mohamed@joe.co" style="width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:11px; padding:10px 13px; color:var(--text); font-size:13px; font-family:inherit;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11.5px; color:var(--text-dim); display:block; margin-bottom:6px;">كلمة المرور</label>
+        <input type="password" value="••••••••" style="width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:11px; padding:10px 13px; color:var(--text); font-size:13px; font-family:inherit;">
+      </div>
+      <button class="btn btn-primary" style="width:100%; padding:11px; font-size:13px;" onclick="showOrgPicker()">تسجيل الدخول</button>
+      <div style="text-align:center; margin-top:14px; font-size:11.5px; color:var(--text-faint);">نسيت كلمة المرور؟</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BOOT: ORGANIZATION PICKER ============ -->
+<div id="boot-orgs" style="min-height:100vh; display:none; align-items:center; justify-content:center;">
+  <div class="fade" style="width:100%; max-width:420px; padding:0 20px;">
+    <div style="text-align:center; margin-bottom:22px;">
+      <div style="font-size:18px; font-weight:800; font-family:Cairo;">اختار شركتك</div>
+      <div style="font-size:12.5px; color:var(--text-dim); margin-top:4px;">محمد جو عنده أكتر من organization متصلة بنفس الحساب</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="card" style="display:flex; align-items:center; gap:13px; cursor:pointer;" onclick="enterApp()">
+        <div class="sidebar-logo" style="width:40px;height:40px;border-radius:12px;">MJ</div>
+        <div style="flex:1;"><div style="font-weight:700; font-size:13.5px;">Mohamed Joe Co.</div><div style="font-size:11px; color:var(--text-faint);">Owner / CEO · 20 موظف</div></div>
+        <span style="color:var(--text-faint);">←</span>
+      </div>
+      <div class="card" style="display:flex; align-items:center; gap:13px; cursor:pointer; opacity:.6;" onclick="enterApp()">
+        <div style="width:40px;height:40px;border-radius:12px; background:linear-gradient(135deg,#22D3EE,#6366F1); display:flex;align-items:center;justify-content:center; font-weight:700; font-size:12px;">UK</div>
+        <div style="flex:1;"><div style="font-weight:700; font-size:13.5px;">UpKlick</div><div style="font-size:11px; color:var(--text-faint);">Admin · 8 موظفين</div></div>
+        <span style="color:var(--text-faint);">←</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app-shell" style="display:none;">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">OS</div>
+      <div class="sidebar-org">Mohamed Joe Co.</div>
+    </div>
+    <div class="sidebar-scroll" id="sidebar-nav"></div>
+    <div class="sidebar-footer">
+      <div class="avatar" style="background:linear-gradient(135deg,#F59E0B,#DC2626);">MJ</div>
+      <div>
+        <div style="font-size:12px; font-weight:600;">Mohamed Joe</div>
+        <div style="font-size:10.5px; color:var(--slate);">Owner / CEO</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="topbar-search" onclick="openPalette()" style="cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>دوّر في أي حاجة...</span>
+        <kbd>⌘K</kbd>
+      </div>
+      <div class="top-actions">
+        <div class="icon-btn" onclick="toggleQuickActions()" style="position:relative; background:var(--grad-primary); color:#fff;">+
+          <div id="qa-dropdown" class="notif-dropdown"></div>
+        </div>
+        <div class="icon-btn" onclick="toggleNotifications()" style="position:relative;">🔔<span class="dot-badge"></span>
+          <div id="notif-dropdown" class="notif-dropdown"></div>
+        </div>
+        <div class="icon-btn" onclick="toggleAI()">✨</div>
+      </div>
+    </div>
+    <div class="body-row">
+      <div class="content" id="content"></div>
+      <div class="ai-panel" id="ai-panel">
+        <div class="ai-header">
+          <div class="ai-orb breathe"></div>
+          <div><div style="font-size:13px; font-weight:600;">AI Copilot</div><div id="ai-subtitle" style="font-size:10.5px; color:var(--slate);">شريكك في تشغيل الشركة</div></div>
+          <div class="icon-btn" style="margin-right:auto;" onclick="toggleAI()">✕</div>
+        </div>
+        <div class="ai-body" id="ai-body"></div>
+        <div class="ai-input-row">
+          <input class="ai-input" placeholder="اسأل الـ AI عن أي حاجة...">
+          <button class="send-btn">↑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Peek Panel (slide-over quick preview) -->
+<div id="peek-backdrop" class="peek-backdrop" onclick="closePeek()"></div>
+<div id="peek-panel" class="peek-panel"></div>
+
+<!-- Command Palette overlay -->
+<div id="palette-overlay" class="palette-overlay" onclick="if(event.target===this) closePalette()">
+  <div class="palette-box">
+    <div class="palette-input-row">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="palette-input" class="palette-input" placeholder="دوّر في صفحات، عملاء، أقسام، موظفين..." oninput="filterPalette(this.value)">
+      <kbd>ESC</kbd>
+    </div>
+    <div id="palette-results" class="palette-results"></div>
+  </div>
+</div>
+
+<script>
+/* ================= NAVIGATION TREE (Information Architecture) ================= */
+const ICONS = {
+  "mission-control": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>',
+  "ai-brain": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2a2.5 2.5 0 0 0-2.45 2.98A2.5 2.5 0 0 0 5.5 9.5a2.5 2.5 0 0 0 0 5 2.5 2.5 0 0 0 1.55 4.52A2.5 2.5 0 0 0 9.5 22h1V2z"/><path d="M14.5 2a2.5 2.5 0 0 1 2.45 2.98 2.5 2.5 0 0 1 1.55 4.52 2.5 2.5 0 0 1 0 5 2.5 2.5 0 0 1-1.55 4.52A2.5 2.5 0 0 1 14.5 22h-1V2z"/></svg>',
+  "approvals": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+  "alerts": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
+  "timeline": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
+  "customers": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  "departments": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1"/></svg>',
+  "employees": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+  "knowledge": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  "collab": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  "automations": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7v8l10-12h-7V2z"/></svg>',
+  "finance-hq": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.2 5.2-3-3L7 13.7"/></svg>',
+  "reports": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 17V11M12 17V7M16 17v-4"/></svg>',
+  "settings": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+};
+
+const NAV = [
+  {key:"mission-control", label:"Mission Control"},
+  {key:"ai-brain", label:"AI Brain"},
+  {key:"approvals", label:"Approvals"},
+  {key:"alerts", label:"Alert Center"},
+  {key:"timeline", label:"Company Timeline"},
+  {key:"customers", label:"Customers"},
+  {key:"departments", label:"Departments", children:[
+    {key:"Marketing", label:"Marketing"}, {key:"Sales", label:"Sales"},
+    {key:"Execution", label:"Execution"}, {key:"Support", label:"Support"},
+    {key:"Development", label:"Development"}, {key:"Design", label:"Design"},
+    {key:"Finance", label:"Finance"}, {key:"HR", label:"HR"},
+  ]},
+  {key:"employees", label:"Employees", children:[
+    {key:"omar", label:"Omar — Strategy"}, {key:"ahmed", label:"Ahmed — Dev"},
+    {key:"mennah", label:"Mennah — Design"},
+  ]},
+  {key:"knowledge", label:"Knowledge Base"},
+  {key:"collab", label:"Collaboration Hub"},
+  {key:"automations", label:"Automation Center"},
+  {key:"finance-hq", label:"Finance"},
+  {key:"reports", label:"Executive Reports"},
+  {key:"settings", label:"Settings"},
+];
+
+let state = {path:["mission-control"], openGroups:{customers:false, departments:false, employees:false}};
+
+function renderSidebar(){
+  const el = document.getElementById('sidebar-nav');
+  const effectiveChild = (state.path[0]==='collab' && !state.path[1]) ? 'workspace' : state.path[1];
+  el.innerHTML = NAV.map(item=>{
+    const isActive = state.path[0]===item.key && (state.path.length===1 || item.key==='collab' || item.key==='customers');
+    if(!item.children){
+      return `<div class="nav-item ${isActive?'active':''}" onclick="navigate(['${item.key}'])">
+        <span class="ico">${ICONS[item.key]}</span><span>${item.label}</span>
+      </div>`;
+    }
+    const groupOpen = state.openGroups[item.key] || state.path[0]===item.key;
+    return `
+      <div class="nav-item ${state.path[0]===item.key && state.path.length===1 ? 'active':''}" onclick="toggleGroup('${item.key}')">
+        <span class="ico">${ICONS[item.key]}</span><span>${item.label}</span><span class="chev ${groupOpen?'open':''}">▶</span>
+      </div>
+      <div class="nav-children ${groupOpen?'open':''}">
+        ${item.children.map(c=>`
+          <div class="nav-child ${state.path[0]===item.key && effectiveChild===c.key ? 'active':''}" onclick="navigate(['${item.key}','${c.key}'])">
+            <span class="dot"></span><span>${c.label}</span>
+          </div>`).join("")}
+      </div>`;
+  }).join("");
+}
+
+function toggleGroup(key){
+  state.openGroups[key] = !state.openGroups[key];
+  navigate([key]);
+}
+
+function findLabel(key, childKey){
+  const item = NAV.find(n=>n.key===key);
+  if(!item) return key;
+  if(!childKey) return item.label;
+  const child = (item.children||[]).find(c=>c.key===childKey);
+  return {parent:item.label, child: child ? child.label : childKey};
+}
+
+function renderBreadcrumb(){
+  const el = document.getElementById('breadcrumb');
+  let [rootKey, childKey] = state.path;
+  if(rootKey==='collab' && !childKey) childKey = 'workspace';
+  const rootItem = NAV.find(n=>n.key===rootKey);
+  let html = `<span class="seg ${!childKey?'current':''}" onclick="navigate(['${rootKey}'])">${rootItem.label}</span>`;
+  if(childKey){
+    let childLabel = childKey;
+    if(rootKey==='collab'){
+      const hubLabels = {"workspace":"Workspace","announcements-all":"Announcements","meetings-all":"Meetings","tasks-all":"Tasks","pinned-all":"Pinned","knowledge-all":"Knowledge","files-all":"Files","archive":"Archive"};
+      childLabel = hubLabels[childKey] || ((CHANNELS[childKey]?.dm ? '' : '#') + (CHANNELS[childKey]?.name || childKey));
+    } else if(rootKey==='ai-brain'){
+      childLabel = AGENTS[childKey]?.name || childKey;
+    } else if(rootKey==='customers'){
+      childLabel = CUSTOMERS[childKey]?.name || childKey;
+    } else {
+      const child = (rootItem.children||[]).find(c=>c.key===childKey);
+      childLabel = child ? child.label : childKey;
+    }
+    html += `<span class="sep">/</span><span class="seg current">${childLabel}</span>`;
+  }
+  el.innerHTML = html;
+}
+
+function navigate(path){
+  state.path = path;
+  if(path.length===1 && NAV.find(n=>n.key===path[0] && n.children)){
+    state.openGroups[path[0]] = true;
+  }
+  if(path[0] !== 'customers' || !path[1]) renderAI();
+  renderSidebar();
+  renderBreadcrumb();
+  renderPage();
+}
+
+function renderPage(){
+  const [root, child] = state.path;
+  if(root==="mission-control") return renderMissionControl();
+  if(root==="ai-brain") return child ? renderAgentDetail(child) : renderAIBrain();
+  if(root==="approvals") return renderApprovals();
+  if(root==="alerts") return renderAlertCenter();
+  if(root==="timeline") return renderCompanyTimeline();
+  if(root==="customers") return child ? openWorkspaceTab('customers', child) : renderCustomersIndex();
+  if(root==="departments") return child ? renderDepartmentOS(child) : renderDepartmentsIndex();
+  if(root==="employees") return child ? renderEmployeeWorkspace(child) : renderEmployeesIndex();
+  if(root==="knowledge") return renderSimplePage("Knowledge Base","كل معرفة الشركة — SOPs، تدريبات، محادثات، قرارات — قابلة للبحث ومتاحة لكل الـ AI Agents.");
+  if(root==="collab") return renderCollabHub(child || "workspace");
+  if(root==="automations") return renderSimplePage("Automation Center","كل الأتمتة اللي بتشتغل في الخلفية: تريجرز، شروط، أكشنز حقيقية بتتنفذ تلقائيًا.");
+  if(root==="finance-hq") return renderSimplePage("Finance","الإيرادات، المصروفات، الفواتير، والتوقعات المالية على مستوى الشركة كلها.");
+  if(root==="reports") return renderExecutiveReports();
+  if(root==="settings") return renderSettings();
+}
+
+/* ================= SVG helper ================= */
+function svgLine(points, color){
+  const w=260,h=56;
+  const max=Math.max(...points), min=Math.min(...points);
+  const step=w/(points.length-1);
+  const coords=points.map((p,i)=>[i*step, h-((p-min)/(max-min||1))*h*0.85-6]);
+  const path="M"+coords.map(c=>c.join(",")).join(" L ");
+  const area=path+" L "+w+","+h+" L 0,"+h+" Z";
+  return '<svg width="100%" height="'+h+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'+
+    '<defs><linearGradient id="g'+color.replace('#','')+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="'+color+'" stop-opacity="0.25"/><stop offset="100%" stop-color="'+color+'" stop-opacity="0"/>'+
+    '</linearGradient></defs><path d="'+area+'" fill="url(#g'+color.replace('#','')+')"/>'+
+    '<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+/* ================= MISSION CONTROL (CEO overview only) ================= */
+function renderMissionControl(){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade">
+      <div class="page-title">Mission Control</div>
+      <div class="page-sub">الأحد ٢٦ يوليو — نظرة عامة على صحة الشركة كلها، مش أكتر</div>
+    </div>
+    <div class="page-body fade">
+      <div class="grid" style="grid-template-columns:280px 1fr; margin-bottom:14px;">
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+            <div style="width:80px;height:80px;border-radius:50%;background:conic-gradient(var(--signal) 0% 87%, var(--slate-100) 87% 100%); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <div style="width:60px;height:60px;border-radius:50%;background:#14161C;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div style="font-family:'Space Grotesk'; font-size:17px; font-weight:700;">87</div>
+              </div>
+            </div>
+            <div><div class="badge b-success" style="margin-bottom:5px;">ممتازة</div><div style="font-size:11px; color:var(--text-faint);">كانت 84 إمبارح <span style="color:var(--signal);">▲ +3</span></div></div>
+          </div>
+          <div style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">أكبر 3 مؤثرات على التغيير</div>
+          ${[
+            ["Sales","+3.2","معدل الإغلاق ارتفع من 22% لـ 26%","up"],
+            ["Support","-1.1","تذاكر متأخرة زادت من 4 لـ 6","down"],
+            ["Marketing","+0.8","حملة August Awareness حسّنت الأداء","up"],
+          ].map(c=>`
+            <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-top:1px solid var(--border-soft);">
+              <span style="font-size:11px; font-weight:700; color:${c[3]==='up'?'var(--signal)':'#F87171'};">${c[3]==='up'?'▲':'▼'} ${c[1]}</span>
+              <div style="flex:1;"><div style="font-size:11.5px; font-weight:600;">${c[0]}</div><div style="font-size:10px; color:var(--text-faint);">${c[2]}</div></div>
+            </div>`).join("")}
+        </div>
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:7px; margin-bottom:8px;">
+            <span class="ai-orb" style="width:18px;height:18px;"></span><span style="font-size:12.5px; font-weight:600;">ملخص الـ AI اليومي</span>
+            <span class="badge b-info" style="margin-right:auto;">مُحدّث دلوقتي</span>
+          </div>
+          <p style="font-size:12.5px; line-height:1.75; color:var(--text-dim);">الإيرادات أعلى بـ ١٢٪ من متوسط الأسبوع. حملة "Ramadan Launch" بتستهلك ميزانية بمعدل تحويل ضعيف. Support عنده ٦ تذاكر متأخرة. Omar عنده ٣ مهام متأخرة في مرحلة الـ AI Strategy.</p>
+          <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border-soft); display:flex; gap:16px;">
+            <a onclick="navigate(['alerts'])" style="font-size:11px; color:#F87171; cursor:pointer;">🔴 تنبيهات حرجة (2) ←</a>
+            <a onclick="navigate(['reports'])" style="font-size:11px; color:#A5B4FC; cursor:pointer;">📊 التقرير التنفيذي الكامل ←</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid g4" style="margin-bottom:14px;">
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            <div class="icon-chip accent-lime"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div><div class="kpi-label">الإيرادات (الشهر)</div><div class="kpi-value">٤٨٢,٣٠٠ ج</div></div>
+          </div>
+          <span class="kpi-trend" style="background:var(--signal-50); color:var(--signal);">▲ 12%</span>
+          ${svgLine([30,42,38,55,48,60,72,68,80,87],'#16A34A')}
+        </div>
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            <div class="icon-chip accent-lilac"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <div><div class="kpi-label">عملاء جدد</div><div class="kpi-value">٢٤</div></div>
+          </div>
+          <span class="kpi-trend" style="background:var(--indigo-50); color:var(--indigo);">▲ 5</span>
+          ${svgLine([5,8,6,10,12,9,14,16,15,18],'#4F46E5')}
+        </div>
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            <div class="icon-chip accent-sky"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            <div><div class="kpi-label">الموظفين النشطين</div><div class="kpi-value">١٨ / ٢٠</div></div>
+          </div>
+          <div class="bar-track" style="margin-top:8px;"><div class="bar-fill" style="width:90%;"></div></div>
+        </div>
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            <div class="icon-chip accent-peach"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div><div class="kpi-label">تذاكر Support مفتوحة</div><div class="kpi-value">١٤</div></div>
+          </div>
+          <div class="bar-track" style="margin-top:8px;"><div class="bar-fill" style="width:60%; background:var(--amber);"></div></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1.3fr 1fr;">
+        <div class="card">
+          <div style="font-size:12.5px; font-weight:600; margin-bottom:10px;">حالة الأقسام — دوس على أي قسم يوديك لصفحته الكاملة</div>
+          <div class="grid g4" style="gap:10px;">
+            ${[["Marketing","🟡"],["Sales","🟢"],["Execution","🟢"],["Support","🔴"],["Development","🟢"],["Design","🟢"],["Finance","🟢"],["HR","🟢"]].map((d,i)=>{
+              const accents=["accent-lime","accent-lilac","accent-peach","accent-sky"];
+              return `<div onclick="navigate(['departments','${d[0]}'])" class="${accents[i%4]}" style="border-radius:14px; padding:12px; cursor:pointer; transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="font-size:12px; font-weight:700;">${d[0]}</div><div style="font-size:11px; margin-top:3px;">${d[1]}</div>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="font-size:12.5px; font-weight:600;">موافقات معلّقة</span><span class="badge b-warning">٤</span></div>
+          ${[["فاتورة Meta Ads","٨,٤٠٠ ج","F"],["عرض سعر — Nour Store","١٥,٠٠٠ ج","S"],["إجازة أحمد","٣ أيام","H"]].map(a=>`
+            <div class="row-item"><div class="avatar-sm" style="background:var(--indigo);">${a[2]}</div>
+              <div style="flex:1;"><div style="font-size:12px;">${a[0]}</div><div style="font-size:10.5px; color:var(--slate);">${a[1]}</div></div>
+              <button class="btn btn-ghost" style="padding:4px 9px; font-size:10.5px;" onclick="navigate(['approvals'])">مراجعة</button>
+            </div>`).join("")}
+          <div style="text-align:left; margin-top:6px;"><a onclick="navigate(['approvals'])" style="font-size:11px; color:#A5B4FC; cursor:pointer;">كل الموافقات ←</a></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:12.5px; font-weight:600;">مهامك التنفيذية النهاردة</span>
+          <span style="font-size:10px; color:var(--text-faint);">مرتبة تلقائيًا: urgency × impact × availability</span>
+        </div>
+        ${[
+          {title:"اعتماد عرض سعر Nour Store", source:"pending_approval", sourceLabel:"موافقة معلّقة", score:2.4},
+          {title:"متابعة عميلة متأخرة: Mona Beauty", source:"customer_at_risk", sourceLabel:"عميل متأخر", score:1.9},
+          {title:"مراجعة أداء حملة Ramadan Launch", source:"automation_rule", sourceLabel:"Automation Rule", score:1.5},
+          {title:"مراجعة أداء عمر — دورة تقييم شهرية", source:"employee_review_cycle", sourceLabel:"دورة تقييم", score:1.0},
+        ].sort((a,b)=>b.score-a.score).map(t=>`
+          <div class="row-item">
+            <span style="width:26px;height:26px;border-radius:8px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--indigo);">${t.score.toFixed(1)}</span>
+            <div style="flex:1;"><div style="font-size:12.5px;">${t.title}</div><div style="font-size:10px; color:var(--text-faint); margin-top:1px;">المصدر: ${t.sourceLabel}</div></div>
+          </div>`).join("")}
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:12.5px; font-weight:600;">Recent Activity</span>
+          <a onclick="navigate(['timeline'])" style="font-size:11px; color:#A5B4FC; cursor:pointer;">كل الـ Timeline ←</a>
+        </div>
+        ${[
+          {icon:"💰", label:"دفعة اتقبضت من Khaled Fitness — ١٨,٠٠٠ جنيه", time:"من ساعة"},
+          {icon:"📞", label:"مكالمة Kickoff مع عميل جديد — Layla Studio", time:"من 3 ساعات"},
+          {icon:"✅", label:"محمد جو اعتمد فاتورة Meta Ads", time:"من 4 ساعات"},
+          {icon:"🚀", label:"إطلاق حملة Khaled Fitness Ramadan", time:"إمبارح"},
+        ].map(e=>`
+          <div class="row-item"><span style="width:26px;height:26px;border-radius:8px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:12px;">${e.icon}</span>
+            <div style="flex:1;"><div style="font-size:12px;">${e.label}</div></div>
+            <span style="font-size:10.5px; color:var(--text-faint);">${e.time}</span>
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+
+/* ================= AI BRAIN ================= */
+const AGENTS = {
+  "ceo":{name:"CEO AI", role:"Chief Executive & Strategic Decision Maker", status:"نشط", learned:"482 قرار استراتيجي", icon:"👑",
+    memory:["الهدف طويل المدى: بناء شركة بمليار دولار قيمة","محمد جو بيفضل قرارات مبنية على بيانات مش حدس","أولوية الشهر: رفع معدل الاحتفاظ بالعملاء"],
+    tools:["توليد Daily/Weekly/Monthly Executive Report","Board Mode — تحدي الافتراضات","Company Scorecard لكل الأقسام"],
+    activity:["لخّص أداء الأسبوع للـ Owner","تحدّى قرار توسيع فريق Sales قبل مراجعة الـ CAC","اقترح فرصة تسعير جديدة"],
+  },
+  "operations":{name:"Operations Manager AI", role:"COO — يراقب كل الأقسام والـ Workflows", status:"نشط", learned:"9 أقسام مراقَبة", icon:"⚙️",
+    memory:["فريق الـ Execution بياخد متوسط 3 أيام لتسليم مشروع متوسط","بلوكرات الفاينانس بتتكرر مع مشاريع Media Buying","مسار العميل الكامل: Lead→Sales→Payment→Client Success→Execution→Marketing→Scaling→Support→Retention"],
+    tools:["Workflow Monitoring end-to-end","SOP Enforcement (كشف خطوات متقفزة)","تجهيز ملخص الـ CEO الصباحي"],
+    activity:["رصد بلوكر في مشروع Khaled Fitness","اكتشف مخالفة SOP في Execution — خطوة QA اتقفزت","جهّز ملخص الصباح لمحمد جو"],
+  },
+  "finance":{name:"Finance AI", role:"CFO — Cashflow, Revenue, Tax, Payroll", status:"نشط", learned:"1.2K معاملة", icon:"📈",
+    memory:["مصروفات الإعلانات بتاخد 40% من الميزانية الشهرية","التدفق النقدي مستقر آخر 3 شهور","الشركة عندها كيانات في مصر وهولندا والإمارات — ضرايب مختلفة لكل واحد"],
+    tools:["توليد Financial Health Score","رصد فاتورة متأخرة تلقائيًا","تنبيه المحاسبين قبل مواعيد الضرايب"],
+    activity:["رصد فاتورة Meta Ads محتاجة اعتماد","حدّث توقعات الربع القادم","نبّه لموعد ضريبة القيمة المضافة القادم"],
+  },
+  "hr":{name:"HR AI", role:"CPO — دورة حياة الموظف كاملة", status:"نشط", learned:"18 موظف", icon:"🧑‍💼",
+    memory:["معدل رضا الموظفين الحالي 88%","قاعدة: خطة تحسين قبل أي إنذار، مش إنذار مباشر"],
+    tools:["Employee Health Score","تقييم السير الذاتية عند التوظيف","كشف مخاطر الاستقالة قبل حدوثها"],
+    activity:["رصد طلب إجازة أحمد","اقترح خطة تحسين لموظف بدل إنذار مباشر","لاحظ علامات إرهاق عند Omar"],
+  },
+  "sales":{name:"Sales Executive AI", role:"مستشار مبيعات كبير — مش بياع", status:"نشط", learned:"210 صفقة", icon:"💰",
+    memory:["متوسط دورة البيع 12 يوم","العملاء اللي بيسألوا عن الـ ROI بيقفلوا أسرع","Follow-up Engine: 24س توصية → 48س تذكير → 72س تنبيه مدير → 7 أيام Lost/Reactivation"],
+    tools:["CRM Quality Control (مفيش سجل ناقص)","توليد رد على اعتراض العميل","Call Review بمعايير Opening/Discovery/Closing"],
+    activity:["ذكّر Sara بمتابعة Nour Store بعد 24 ساعة صمت","رفض تسجيل صفقة لأن الملاحظات ناقصة","صعّد عميلة VIP واقفة من غير رد"],
+  },
+  "marketing":{name:"Marketing & Media Buyer AI", role:"CMO + Senior Media Buyer + Creative Director", status:"نشط", learned:"96 حملة", icon:"📣",
+    memory:["حملات الفيديو القصير بتحقق تفاعل أعلى بـ35%","الجمهور المستهدف الأساسي عمره 28-40","كل حملة ناجحة بتتخزن كـ creative framework في قاعدة المعرفة"],
+    tools:["Campaign Builder خطوة بخطوة","Account Review (Pixel/CAPI/Audience Overlap)","Creative Analysis بتنبؤ CTR/Conversion"],
+    activity:["اقترح تعديل استهداف Ramadan Launch","رصد ROAS ضعيف — أوصى بإيقاف الحملة","خزّن creative ناجح في المكتبة"],
+  },
+  "content":{name:"Content Creator AI", role:"Chief Content Strategist", status:"نشط", learned:"420 محتوى", icon:"✍️",
+    memory:["المحتوى التعليمي بيحقق أعلى مشاركة","نبرة الكتابة المفضلة: مباشرة وودودة"],
+    tools:["Content Calendar (يومي/أسبوعي/شهري/ربع سنوي)","AI Content Review قبل النشر (Predicted Virality)","Content Library بفئات (Winning/Evergreen/Templates)"],
+    activity:["كتب مسودة منشور إعلان الشهر","راجع محتوى قبل النشر — Hook ضعيف، اقترح بديل","خزّن framework محتوى ناجح"],
+  },
+  "graphic_designer":{name:"Graphic Designer AI", role:"Creative Director & Brand Guardian", status:"نشط", learned:"64 تصميم", icon:"🎨",
+    memory:["الهوية البصرية المعتمدة: ألوان + خطوط ثابتة لكل براند","Approval Workflow: Draft→Internal Review→AI Review→Manager→Client→Published"],
+    tools:["Creative Review (Typography/Alignment/CTA Visibility)","كشف عدم اتساق الهوية البصرية تلقائيًا","ربط أداء التصميم بعد النشر (CTR/ROAS)"],
+    activity:["راجع تصميم بانرات أغسطس — اتساق هوية ممتاز","رفض تصميم لعدم وضوح الـ CTA","خزّن تصميم ناجح في المكتبة"],
+  },
+  "video_editor":{name:"Video Editor AI", role:"Creative Video Director", status:"نشط", learned:"38 فيديو", icon:"🎬",
+    memory:["أول 3 ثواني بتحدد لو المشاهد هيكمل ولا لأ","نفس الـ Approval Workflow بتاع التصميم بالظبط"],
+    tools:["Hook Optimization (أول 3 ثواني)","Retention Analysis (نقاط الملل)","مراجعة الألوان والصوت قبل النشر"],
+    activity:["راجع فيديو حملة خالد — الـ Hook محتاج تعديل","اقترح Thumbnail بديل لفيديو يوتيوب"],
+  },
+  "client_success":{name:"Client Success AI", role:"الإرشاد المستمر لنجاح العميل، مش إكمال المراحل بس", status:"نشط", learned:"64 عميل", icon:"🧭",
+    memory:["سارة حساسة لمواعيد التسليم","عملاء الكوتشينج بيحتاجوا متابعة أسبوعية ثابتة","قاعدة صارمة: Never invent answers — صعّد لـ Mentor بشري لو مش متأكد"],
+    tools:["Customer Health Score (0-100) مع تفسير التغيير","توليد أجندة قبل الاجتماع وملخص بعده","توصية فيديو/كويز حسب المرحلة الحالية بس"],
+    activity:["راجع استراتيجية سارة","نبّه لتأخر في مرحلة Landing Page","صعّد عميلة توقفت عن الرد لـ Mentor بشري"],
+  },
+  "client_setup":{name:"Client Setup Specialist AI", role:"بوابة الجودة قبل التسويق — Setup كامل", status:"نشط", learned:"41 إعداد عميل", icon:"🛠️",
+    memory:["Workflow: Receive→Validate→Prepare Assets→Configure Accounts→Connect Platforms→Quality Review→Manager Approval→Marketing Handoff","قاعدة صارمة: Nothing can be approved automatically"],
+    tools:["Execution Checklist (Logo, Meta Business Manager, Pixel, Domain...)","AI Quality Score لكل عميل","كشف الأخطاء التقنية (Meta rejects account, Domain fails)"],
+    activity:["اعتمد إعداد حساب Khaled Fitness — Quality Score 94","صعّد رفض Meta Business Verification لعميلة جديدة"],
+  },
+};
+const AGENT_ORDER = ["ceo","operations","finance","hr","sales","marketing","content","graphic_designer","video_editor","client_success","client_setup"];
+let agentTab = "memory";
+
+
+function renderAIBrain(){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade"><div class="page-title">AI Brain</div><div class="page-sub">11 Agent مستقل بذاكرته الخاصة، منسّقين بواسطة AI Orchestrator، وكلهم بيشاركوا نفس Company Knowledge Engine</div></div>
+    <div class="page-body fade">
+      <div class="grid g4" style="margin-bottom:16px;">
+        <div class="card"><div class="kpi-label">مصادر معرفة مُتعلّمة</div><div class="kpi-value">٢,٤٨٠</div></div>
+        <div class="card"><div class="kpi-label">Agents نشطة</div><div class="kpi-value">١١ / ١١</div></div>
+        <div class="card"><div class="kpi-label">قرارات Orchestrator اليوم</div><div class="kpi-value">٢٣</div></div>
+        <div class="card"><div class="kpi-label">مهام اتولدت تلقائي</div><div class="kpi-value">٥</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px; background:linear-gradient(160deg, var(--indigo-bg), transparent);">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:16px;">🧠</span><span style="font-size:12.5px; font-weight:700;">AI Orchestrator — آخر قرار متعدد الـ Agents</span>
+        </div>
+        <p style="font-size:11.5px; color:var(--text-faint); margin-bottom:10px;">أي طلب بيعدي على الـ Orchestrator الأول، وهو بيقرر مين من الـ Agents يشترك في الرد — مش كل Agent بيرد لوحده.</p>
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:10px; font-size:11px;">
+          <span class="badge b-info">طلب: استرجاع Mona Beauty</span>
+          <span style="color:var(--text-faint);">→</span>
+          <span class="badge b-neutral">Finance AI</span><span style="color:var(--text-faint);">→</span>
+          <span class="badge b-neutral">Client Success AI</span><span style="color:var(--text-faint);">→</span>
+          <span class="badge b-neutral">Support AI</span><span style="color:var(--text-faint);">→</span>
+          <span class="badge b-neutral">CEO AI</span>
+        </div>
+        <div class="ai-card">التوصية النهائية: اعتماد استرجاع جزئي (50%) — العميلة نشطة وسجلها نضيف، بس فيه شكوى تقنية حقيقية موثقة. الثقة: 82%.</div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:16px;">🗂️</span><span style="font-size:12.5px; font-weight:700;">Knowledge Engine (مشتركة بين كل الـ Agents)</span>
+        </div>
+        <p style="font-size:12px; color:var(--text-dim); line-height:1.7;">كل معرفة جديدة (SOP، مكالمة، مراجعة تصميم) بتعدي على Draft → AI Review → Manager Review → Approved → Published — ومفيش Agent بيقرا حاجة قبل ما توصل Published.</p>
+        <div style="display:flex; gap:16px; margin-top:10px; font-size:11px; color:var(--text-faint);">
+          <span>📄 2,480 مستند</span><span>💬 1.8K محادثة مفهرسة</span><span>📚 4 SOPs معتمدة</span>
+        </div>
+      </div>
+
+      <div style="font-size:12.5px; font-weight:600; margin-bottom:9px;">فريق الـ AI Agents (11)</div>
+      <div class="grid g4" style="margin-bottom:18px;">
+        ${AGENT_ORDER.map(id=>{
+          const a = AGENTS[id];
+          return `<div class="card" onclick="navigate(['ai-brain','${id}'])" style="cursor:pointer;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span style="font-size:16px;">${a.icon}</span><span class="badge ${a.status==='نشط'?'b-success':'b-warning'}">${a.status}</span></div>
+            <div style="font-size:12px; font-weight:700; margin-top:4px;">${a.name}</div>
+            <div style="font-size:10.5px; color:var(--text-dim); margin-bottom:7px;">${a.role}</div>
+            <div style="font-size:10px; color:var(--text-faint);">تعلّم من ${a.learned}</div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="card">
+        <div style="font-size:12.5px; font-weight:600; margin-bottom:9px;">اسأل عقل الشركة (كل الـ Agents مع بعض)</div>
+        <div style="display:flex; gap:8px;"><input class="ai-input" style="flex:1;" placeholder="مثال: إيه أكتر حاجة بتأخر العملاء في مرحلة الـ Landing Page؟"><button class="btn btn-primary">اسأل</button></div>
+      </div>
+    </div>`;
+}
+
+function renderAgentDetail(id){
+  agentTab = "memory";
+  renderAgentShell(id);
+}
+function switchAgentTab(id, tab){ agentTab = tab; renderAgentShell(id); }
+
+function renderAgentShell(id){
+  const a = AGENTS[id];
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:40px;height:40px;border-radius:12px;background:var(--indigo-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">${a.icon}</div>
+        <div><div class="page-title">${a.name}</div><div class="page-sub">${a.role} · <span class="badge ${a.status==='نشط'?'b-success':'b-warning'}">${a.status}</span></div></div>
+      </div>
+      <div class="tab-row">
+        <button class="tab-btn ${agentTab==='memory'?'active':''}" onclick="switchAgentTab('${id}','memory')">Memory الخاصة به</button>
+        <button class="tab-btn ${agentTab==='knowledge'?'active':''}" onclick="switchAgentTab('${id}','knowledge')">Company Knowledge</button>
+        <button class="tab-btn ${agentTab==='tools'?'active':''}" onclick="switchAgentTab('${id}','tools')">Tools</button>
+        <button class="tab-btn ${agentTab==='activity'?'active':''}" onclick="switchAgentTab('${id}','activity')">Activity</button>
+        <button class="tab-btn ${agentTab==='ask'?'active':''}" onclick="switchAgentTab('${id}','ask')">اسأله مباشرة</button>
+      </div>
+    </div>
+    <div class="page-body fade" id="agent-tab-body"></div>`;
+  renderAgentTabBody(id);
+}
+
+function renderAgentTabBody(id){
+  const a = AGENTS[id];
+  const el = document.getElementById('agent-tab-body');
+  const tab = agentTab;
+
+  if(tab==="memory"){
+    el.innerHTML = `<p style="font-size:11.5px; color:var(--text-faint); margin-bottom:12px;">دي معرفة خاصة بـ${a.name} بس — مبنية على خبرته في مجاله، مش متاحة لباقي الـ Agents مباشرة.</p>` +
+      a.memory.map(m=>`<div class="ai-card" style="margin-bottom:8px;">${m}</div>`).join("");
+    return;
+  }
+  if(tab==="knowledge"){
+    el.innerHTML = `<div class="card">
+      <p style="font-size:12px; color:var(--text-dim); line-height:1.7;">${a.name} بيقرا من نفس Company Knowledge المشتركة (2,480 مستند، محادثات، SOPs) زي كل الـ Agents التانية — القراءة موحّدة، الفهم والتوصية شخصية حسب تخصصه.</p>
+    </div>`;
+    return;
+  }
+  if(tab==="tools"){
+    el.innerHTML = a.tools.map(t=>`<div class="card" style="display:flex; align-items:center; gap:12px; margin-bottom:8px;"><span style="font-size:16px;">🔧</span><span style="font-size:12.5px;">${t}</span></div>`).join("");
+    return;
+  }
+  if(tab==="activity"){
+    el.innerHTML = a.activity.map(t=>`<div class="row-item" style="border-bottom:1px solid var(--border-soft);"><span style="width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center; font-size:12px;">✓</span><span style="font-size:12.5px; flex:1;">${t}</span></div>`).join("");
+    return;
+  }
+  if(tab==="ask"){
+    el.innerHTML = `<div class="card"><div style="display:flex; gap:8px;"><input class="ai-input" style="flex:1;" placeholder="اسأل ${a.name} مباشرة..."><button class="btn btn-primary">اسأل</button></div></div>`;
+    return;
+  }
+}
+
+
+/* ================= PEEK PANEL (Notion-style quick preview) ================= */
+function openCustomerPeek(id){
+  const c = CUSTOMERS[id];
+  const panel = document.getElementById('peek-panel');
+  panel.innerHTML = `
+    <div class="peek-header">
+      <div class="avatar-sm" style="background:linear-gradient(135deg,#4F46E5,#8B5CF6); width:38px; height:38px; border-radius:11px;">${c.name[0]}</div>
+      <div style="flex:1;"><div style="font-size:14px; font-weight:700;">${c.name}</div><div style="font-size:11px; color:var(--text-faint);">${c.stage}</div></div>
+      <span onclick="closePeek()" style="cursor:pointer; color:var(--text-faint); font-size:16px;">✕</span>
+    </div>
+    <div class="peek-body">
+      <div class="card" style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-faint); margin-bottom:6px;"><span>التقدم الكلي</span><span class="mono">${c.progress}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${c.progress}%;"></div></div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:11px; color:var(--text-faint); margin-bottom:4px;">متابعها</div>
+        <div style="font-size:12.5px; font-weight:600;">${c.employee}</div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px; color:var(--text-faint); margin-bottom:8px;">آخر رسالة في الـ Chat</div>
+        <p style="font-size:12.5px; color:var(--text-dim);">${c.chat && c.chat.length ? c.chat[c.chat.length-1].text : 'لسه مفيش محادثة'}</p>
+      </div>
+    </div>
+    <div class="peek-footer">
+      <button class="btn btn-primary" style="width:100%;" onclick="closePeek(); openWorkspaceTab('customers','${id}');">فتح الـ Workspace كامل ←</button>
+    </div>`;
+  document.getElementById('peek-backdrop').classList.add('open');
+  panel.classList.add('open');
+}
+function closePeek(){
+  document.getElementById('peek-backdrop').classList.remove('open');
+  document.getElementById('peek-panel').classList.remove('open');
+}
+
+/* ================= WORKSPACE TABS (multi-context switching, like browser/editor tabs) ================= */
+let openTabs = []; // {key, label, module, id}
+let activeTabKey = null;
+
+function tabBarHtml(){
+  if(openTabs.length===0) return '';
+  return `<div class="ws-tabbar">
+    ${openTabs.map(t=>`
+      <div class="ws-tab ${t.key===activeTabKey?'active':''}" onclick="switchToTab('${t.key}')">
+        <span>${t.label}</span>
+        <span class="ws-close" onclick="event.stopPropagation(); closeTab('${t.key}')">✕</span>
+      </div>`).join("")}
+  </div>`;
+}
+
+function openWorkspaceTab(module, id){
+  const key = module + ':' + id;
+  if(!openTabs.find(t=>t.key===key)){
+    const label = module==='customers' ? CUSTOMERS[id]?.name : id;
+    openTabs.push({key, label, module, id});
+  }
+  activeTabKey = key;
+  state.path = [module, id];
+  renderBreadcrumb();
+  renderSidebar();
+  renderActiveTab();
+  renderAI(id); // AI panel switches to this customer's context — never a separate page
+}
+function switchToTab(key){
+  const tab = openTabs.find(t=>t.key===key);
+  if(!tab) return;
+  activeTabKey = key;
+  state.path = [tab.module, tab.id];
+  renderBreadcrumb();
+  renderSidebar();
+  renderActiveTab();
+}
+function closeTab(key){
+  const idx = openTabs.findIndex(t=>t.key===key);
+  if(idx===-1) return;
+  openTabs.splice(idx,1);
+  if(activeTabKey===key){
+    if(openTabs.length>0){
+      activeTabKey = openTabs[openTabs.length-1].key;
+      const tab = openTabs[openTabs.length-1];
+      state.path = [tab.module, tab.id];
+      renderActiveTab();
+    } else {
+      activeTabKey = null;
+      navigate(['customers']); // fall back to the List View
+      return;
+    }
+  }
+  renderSidebar();
+}
+function renderActiveTab(){
+  const tab = openTabs.find(t=>t.key===activeTabKey);
+  if(!tab) return;
+  if(tab.module==='customers') renderCustShell(tab.id);
+}
+
+
+const CUSTOMERS = {
+  sara:{name:"Sara Hossam", stage:"استراتيجية الـ AI", progress:42, health:"🟢", employee:"Omar — Strategy Lead",
+    stages:[
+      {name:"الترحيب", status:"completed"},{name:"الاتفاقية", status:"completed"},{name:"مكالمة البداية", status:"completed"},
+      {name:"اكتشاف البراند", status:"completed"},{name:"معلومات البيزنس", status:"completed"},
+      {name:"استراتيجية الـ AI", status:"current"},{name:"تجهيز المحتوى", status:"locked"},{name:"إعداد السوشيال ميديا", status:"locked"},
+    ],
+    checklist:[["مراجعة تحليل المنافسين",true],["تحديد الجمهور المستهدف",true],["اعتماد استراتيجية المحتوى",false],["توقيع خطة الـ 90 يوم",false]],
+    videos:[{title:"إزاي نبني استراتيجية AI لبيزنسك", duration:"8:24", watched:true},{title:"تحليل الجمهور المستهدف خطوة بخطوة", duration:"12:10", watched:false}],
+    companyFiles:[{name:"AI_Strategy_Draft_v2.pdf", size:"0.8 MB"},{name:"Competitor_Analysis_Template.docx", size:"0.2 MB"}],
+    myUploads:[{name:"Brand_Logo_Final.png", size:"1.2 MB"}],
+    meetings:[{title:"مراجعة استراتيجية أسبوعية", time:"الخميس 3:00 م", withWhom:"Omar"}],
+    chat:[{author:"Omar", me:false, text:"أهلاً سارة! خلاص راجعتي التحليل التنافسي، تحبي نبدأ نحدد الجمهور المستهدف؟"},{author:"أنتِ", me:true, text:"أيوة تمام، بس عندي سؤال عن الفئة العمرية المستهدفة"}],
+    certificates:[{title:"إتمام مرحلة اكتشاف البراند", date:"12 يوليو"}],
+    supportTickets:[],
+  },
+  nour:{name:"Nour Store", stage:"صفحة الهبوط", progress:68, health:"🟡", employee:"Mennah — Design",
+    stages:[{name:"الترحيب",status:"completed"},{name:"الاتفاقية",status:"completed"},{name:"اكتشاف البراند",status:"completed"},{name:"صفحة الهبوط",status:"current"},{name:"إعداد الفانل",status:"locked"}],
+    checklist:[["اعتماد تصميم الصفحة",true],["ربط بوابة الدفع",false]],
+    videos:[{title:"إزاي تصممي صفحة هبوط تحوّل زوار لعملاء", duration:"9:40", watched:true}],
+    companyFiles:[{name:"Landing_Page_Wireframe.pdf", size:"1.4 MB"}], myUploads:[],
+    meetings:[{title:"مراجعة تصميم الصفحة", time:"الاتنين 1:00 م", withWhom:"Mennah"}],
+    chat:[{author:"Mennah", me:false, text:"التصميم جاهز للمراجعة، شوفيه واديني رأيك"}],
+    certificates:[], supportTickets:[],
+  },
+  khaled:{name:"Khaled Fitness", stage:"إطلاق الحملة", progress:88, health:"🟢", employee:"Ahmed — Media Buying",
+    stages:[{name:"الترحيب",status:"completed"},{name:"اكتشاف البراند",status:"completed"},{name:"إعداد الفانل",status:"completed"},{name:"إطلاق الحملة",status:"current"},{name:"التحسين",status:"locked"}],
+    checklist:[["اعتماد الميزانية اليومية",true],["مراجعة الاستهداف",true],["تفعيل الحملة",false]],
+    videos:[{title:"إطلاق حملتك الأولى بثقة", duration:"6:50", watched:true}],
+    companyFiles:[{name:"Ad_Creative_Set.zip", size:"18 MB"}], myUploads:[{name:"Gym_Photos.zip", size:"25 MB"}],
+    meetings:[], chat:[{author:"Ahmed", me:false, text:"الحملة جاهزة للإطلاق بكرة الصبح"}],
+    certificates:[{title:"إتمام إعداد الفانل", date:"15 يوليو"}], supportTickets:[],
+  },
+  mona:{name:"Mona Beauty", stage:"اكتشاف البراند", progress:18, health:"🔴", employee:"Omar — Strategy Lead",
+    stages:[{name:"الترحيب",status:"completed"},{name:"الاتفاقية",status:"completed"},{name:"اكتشاف البراند",status:"current"},{name:"معلومات البيزنس",status:"locked"}],
+    checklist:[["تحديد هوية البراند",false],["اختيار لوحة الألوان",false]],
+    videos:[], companyFiles:[], myUploads:[],
+    meetings:[], chat:[],
+    certificates:[], supportTickets:[{subject:"طلب استرجاع", status:"قيد المراجعة"}],
+  },
+};
+let custListFilter = "all";
+let custListQuery = "";
+
+function renderCustomersIndex(){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade">
+      <div class="page-title">Customers</div>
+      <div class="page-sub">دليل قابل للبحث والفلترة — يشتغل بنفس الشكل لو 4 عملاء أو 5000</div>
+    </div>
+    <div class="page-body fade">
+      <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+        <div class="topbar-search" style="max-width:260px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input id="cust-search-input" oninput="filterCustomerList(this.value)" placeholder="دوّري باسم العميل..." style="background:transparent; border:none; outline:none; color:var(--text); font-size:12.5px; width:100%; font-family:inherit;">
+        </div>
+        <div style="display:flex; gap:6px;">
+          ${[["all","الكل"],["🟢","سليم"],["🟡","محتاج متابعة"],["🔴","في خطر"]].map(f=>`
+            <button class="btn ${custListFilter===f[0]?'btn-primary':'btn-ghost'}" style="padding:6px 12px;" onclick="setCustomerFilter('${f[0]}')">${f[1]}</button>`).join("")}
+        </div>
+      </div>
+      <div class="card" style="padding:6px;" id="cust-list-table"></div>
+    </div>`;
+  renderCustomerListTable();
+}
+function setCustomerFilter(f){ custListFilter = f; renderCustomerListTable(); }
+function filterCustomerList(q){ custListQuery = q.toLowerCase(); renderCustomerListTable(); }
+
+function renderCustomerListTable(){
+  const rows = Object.entries(CUSTOMERS).filter(([id,c]) => {
+    const matchesFilter = custListFilter==='all' || c.health===custListFilter;
+    const matchesQuery = !custListQuery || c.name.toLowerCase().includes(custListQuery);
+    return matchesFilter && matchesQuery;
+  });
+  const el = document.getElementById('cust-list-table');
+  if(!el) return;
+  if(rows.length===0){
+    el.innerHTML = `<div style="text-align:center; padding:36px; color:var(--text-faint); font-size:12.5px;">مفيش نتائج مطابقة</div>`;
+    return;
+  }
+  el.innerHTML = rows.map(([id,c])=>`
+    <div onclick="openCustomerPeek('${id}')" style="display:flex; align-items:center; gap:12px; padding:12px 12px; border-radius:14px; cursor:pointer; transition:.12s;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+      <div class="avatar-sm" style="background:linear-gradient(135deg,#4F46E5,#8B5CF6); width:36px; height:36px; border-radius:11px;">${c.name[0]}</div>
+      <div style="flex:1;"><div style="font-size:13.5px; font-weight:600;">${c.name}</div><div style="font-size:11px; color:var(--text-faint);">${c.stage} · ${c.employee}</div></div>
+      <div style="width:110px;"><div class="bar-track"><div class="bar-fill" style="width:${c.progress}%;"></div></div></div>
+      <span>${c.health}</span>
+    </div>`).join("");
+}
+
+const CUST_TABS = ["Welcome","Journey","Videos","Tasks","Files","Uploads","Meetings","Chat","AI Mentor","Progress","Certificates","Support"];
+let custTab = "Welcome";
+
+function renderCustomerJourney(id){
+  custTab = "Welcome";
+  renderCustShell(id);
+}
+function switchCustTab(id, tab){ custTab = tab; renderCustShell(id); }
+
+function renderCustShell(id){
+  const c = CUSTOMERS[id] || CUSTOMERS.sara;
+  document.getElementById('content').innerHTML = `
+    ${tabBarHtml()}
+    <div class="page-header fade">
+      <div class="page-title">${c.name} <span style="font-size:11px; font-weight:400; color:var(--text-faint);">(معاينة تجربة العميل)</span></div>
+      <div class="page-sub">متابعينها في المرحلة دي: ${c.employee}</div>
+      <div class="tab-row">
+        ${CUST_TABS.map(t=>`<button class="tab-btn ${custTab===t?'active':''}" onclick="switchCustTab('${id}','${t}')">${t}</button>`).join("")}
+      </div>
+    </div>
+    <div class="page-body fade" id="cust-tab-body"></div>`;
+  renderCustTabBody(id);
+}
+
+function renderCustTabBody(id){
+  const c = CUSTOMERS[id] || CUSTOMERS.sara;
+  const el = document.getElementById('cust-tab-body');
+  const tab = custTab;
+
+  if(tab==="Welcome"){
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">أهلاً ${c.name.split(" ")[0]} 👋</div>
+        <p style="font-size:12.5px; color:var(--text-dim); line-height:1.75;">إنتِ دلوقتي في مرحلة <b style="color:var(--text);">${c.stage}</b>. إحنا هنفضل نوريكِ بالظبط فين إنتِ وإيه اللي محتاج منكِ خطوة بخطوة — منتحسيش تايهة أبدًا.</p>
+      </div>
+      <div class="card"><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-faint); margin-bottom:6px;"><span>تقدمك الكلي</span><span class="mono">${c.progress}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${c.progress}%;"></div></div></div>`;
+    return;
+  }
+
+  if(tab==="Journey"){
+    el.innerHTML = `<div class="grid g2">` + c.stages.map((s,i)=>`
+      <div class="card" style="${s.status==='locked'?'opacity:.55;':''} ${s.status==='current'?'border-color:rgba(99,102,241,.4);':''}">
+        <div style="font-size:10.5px; color:var(--text-faint); font-family:'IBM Plex Mono'; margin-bottom:3px;">${String(i+1).padStart(2,'0')}</div>
+        <div style="font-size:12.5px; font-weight:600;">${s.name}</div>
+        <span class="badge ${s.status==='completed'?'b-success':s.status==='current'?'b-info':'b-neutral'}" style="margin-top:6px; display:inline-block;">${s.status==='completed'?'خلصت':s.status==='current'?'شغالة دلوقتي':'مقفولة'}</span>
+      </div>`).join("") + `</div>`;
+    return;
+  }
+
+  if(tab==="Videos"){
+    el.innerHTML = `<div class="grid g2">` + c.videos.map(v=>`
+      <div class="card">
+        <div style="aspect-ratio:16/9; background:var(--surface-2); border-radius:10px; margin-bottom:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">▶</div>
+        <div style="font-size:12.5px; font-weight:600;">${v.title}</div>
+        <div style="display:flex; justify-content:space-between; margin-top:6px;"><span class="mono" style="font-size:11px; color:var(--text-faint);">${v.duration}</span>${v.watched?'<span class="badge b-success">اتشافت</span>':''}</div>
+      </div>`).join("") + `</div>`;
+    return;
+  }
+
+  if(tab==="Tasks"){
+    el.innerHTML = `<div class="card">` + c.checklist.map(t=>`
+      <div class="row-item"><span style="width:15px;height:15px;border-radius:5px;border:2px solid ${t[1]?'var(--signal)':'var(--border)'}; background:${t[1]?'var(--signal)':'transparent'}; display:flex;align-items:center;justify-content:center; color:#fff; font-size:9px;">${t[1]?'✓':''}</span>
+      <span style="font-size:12px; ${t[1]?'color:var(--text-faint); text-decoration:line-through;':''}">${t[0]}</span></div>`).join("") + `</div>`;
+    return;
+  }
+
+  if(tab==="Files"){
+    el.innerHTML = `<div class="card">` + (c.companyFiles.length ? c.companyFiles.map(f=>`
+      <div class="row-item"><span style="font-size:16px;">📄</span><div style="flex:1;"><div style="font-size:12.5px;">${f.name}</div><div style="font-size:10.5px; color:var(--text-faint);">${f.size}</div></div><button class="btn btn-ghost" style="padding:4px 10px; font-size:11px;">تحميل</button></div>`).join("") : `<p style="text-align:center; padding:20px; color:var(--text-faint); font-size:12px;">مفيش ملفات من الفريق لسه</p>`) + `</div>`;
+    return;
+  }
+
+  if(tab==="Uploads"){
+    el.innerHTML = `<div class="card">` + c.myUploads.map(f=>`
+      <div class="row-item"><span style="font-size:16px;">🖼️</span><div style="flex:1;"><div style="font-size:12.5px;">${f.name}</div><div style="font-size:10.5px; color:var(--text-faint);">${f.size}</div></div></div>`).join("") +
+      `<div style="border:1px dashed var(--border); border-radius:12px; padding:20px; text-align:center; margin-top:10px; font-size:12px; color:var(--text-faint);">+ ارفعي ملف جديد</div></div>`;
+    return;
+  }
+
+  if(tab==="Meetings"){
+    el.innerHTML = `<div class="card">` + (c.meetings.length ? c.meetings.map(m=>`
+      <div class="row-item"><div style="width:30px;height:30px;border-radius:9px;background:var(--indigo-bg); display:flex; align-items:center; justify-content:center;">📅</div><div style="flex:1;"><div style="font-size:12.5px; font-weight:600;">${m.title}</div><div style="font-size:10.5px; color:var(--text-faint);">${m.time} · مع ${m.withWhom}</div></div></div>`).join("") : `<p style="text-align:center; padding:20px; color:var(--text-faint); font-size:12px;">مفيش اجتماعات مجدولة</p>`) + `</div>`;
+    return;
+  }
+
+  if(tab==="Chat"){
+    el.innerHTML = `
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div style="padding:16px; display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto;">
+          ${c.chat.map(m=>`<div style="max-width:75%; ${m.me?'margin-right:auto; background:var(--grad-primary); color:#fff;':'background:var(--surface-2);'} border-radius:14px; padding:10px 13px; font-size:12.5px;">${m.text}</div>`).join("")}
+        </div>
+        <div style="border-top:1px solid var(--border); padding:10px 12px; display:flex; gap:8px;">
+          <input class="ai-input" style="flex:1;" placeholder="اكتبي رسالتك لفريق الاستراتيجية...">
+          <button class="btn btn-primary">إرسال</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if(tab==="AI Mentor"){
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:8px;">🤖 مرشدك الذكي</div>
+        <div class="ai-card">وصلتي 42% من رحلتك — كمّلي كويس! خلصي الشيكليست المتبقي عشان تفتحي مرحلة "تجهيز المحتوى".</div>
+      </div>
+      <div class="card"><div style="display:flex; gap:8px;"><input class="ai-input" style="flex:1;" placeholder="اسألي أي سؤال عن رحلتك..."><button class="btn btn-primary">اسأل</button></div></div>`;
+    return;
+  }
+
+  if(tab==="Progress"){
+    el.innerHTML = `<div class="card"><div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-faint); margin-bottom:6px;"><span>تقدمك الكلي</span><span class="mono">${c.progress}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${c.progress}%;"></div></div></div>`;
+    return;
+  }
+
+  if(tab==="Certificates"){
+    el.innerHTML = `<div class="grid g2">` + (c.certificates.length ? c.certificates.map(cert=>`
+      <div class="card accent-lime" style="border:none; box-shadow:none; text-align:center;"><div style="font-size:24px; margin-bottom:6px;">🏆</div><div style="font-size:12.5px; font-weight:600;">${cert.title}</div><div style="font-size:10.5px; color:var(--text-dim); margin-top:3px;">${cert.date}</div></div>`).join("") : `<p style="color:var(--text-faint); font-size:12px; padding:20px;">لسه معندكيش شهادات — أول شهادة هتظهر لما تخلصي مرحلة كاملة.</p>`) + `</div>`;
+    return;
+  }
+
+  if(tab==="Support"){
+    el.innerHTML = `<div class="card" style="margin-bottom:12px;">${c.supportTickets.length ? '' : '<p style="text-align:center; padding:16px; color:var(--text-faint); font-size:12px;">مفيش تذاكر دعم مفتوحة — كل حاجة تمام 🎉</p>'}</div>
+      <div class="card"><div style="font-size:12.5px; font-weight:600; margin-bottom:8px;">محتاجة مساعدة؟</div><textarea style="width:100%; min-height:80px; background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); font-size:12.5px; font-family:inherit;" placeholder="اكتبي مشكلتك وفريق الدعم هيتواصل معاكِ..."></textarea><button class="btn btn-primary" style="margin-top:8px;">إرسال طلب دعم</button></div>`;
+    return;
+  }
+}
+
+
+/* ================= DEPARTMENTS ================= */
+const DEPARTMENTS = {
+  Sales:{emoji:"💰", health:"🟢",
+    tabs:["Dashboard","Leads","CRM","Calls","Pipeline","Tasks","AI Sales Coach","Scripts","Follow ups","Reports"],
+    kpis:[["صفقات مفتوحة","14"],["معدل الإغلاق","24%"],["دخل متوقع الشهر","310K ج"]],
+    leads:[
+      {name:"Layla Studio", stage:"مكالمة أولى", value:"12,000 ج", owner:"Sara"},
+      {name:"Nour Store", stage:"عرض سعر", value:"15,000 ج", owner:"Sara"},
+      {name:"Fitex Gym", stage:"تفاوض", value:"22,000 ج", owner:"Sara"},
+      {name:"Bloom Café", stage:"مؤهل", value:"8,000 ج", owner:"Sara"},
+    ],
+    pipeline:[
+      {stage:"Lead", items:["Bloom Café","Zen Spa"]},
+      {stage:"مؤهل", items:["Fitex Gym"]},
+      {stage:"عرض سعر", items:["Nour Store","Layla Studio"]},
+      {stage:"مغلقة", items:["Khaled Fitness"]},
+    ],
+  },
+  Marketing:{emoji:"📣", health:"🟡",
+    tabs:["Dashboard","Campaigns","Ads","Content Calendar","AI Marketing Manager","Creative Center","Analytics","Budget","Competitors"],
+    kpis:[["حملات نشطة","5"],["تكلفة الاكتساب","96 ج"],["أداء تحت المتوسط","حملة واحدة"]],
+    campaigns:[
+      {name:"Ramadan Launch", status:"نشطة", performance:"تحت المتوسط", budget:"4,200 ج/يوم"},
+      {name:"August Awareness", status:"نشطة", performance:"جيد", budget:"1,800 ج/يوم"},
+      {name:"Retargeting Q3", status:"مجدولة", performance:"—", budget:"—"},
+    ],
+  },
+  Execution:{emoji:"🛠️", health:"🟢",
+    tabs:["Dashboard","Projects","Milestones","Designers","Developers","Review","QA","Delivery"],
+    kpis:[["مشاريع نشطة","11"],["على الخطة","92%"],["متأخرة","1"]],
+    projects:[
+      {name:"Khaled Fitness — Landing Page", status:"بلوكر", owner:"Ahmed"},
+      {name:"Sara Hossam — Brand Kit", status:"شغالة", owner:"Mennah"},
+      {name:"Nour Store — Funnel Setup", status:"مراجعة", owner:"Ahmed"},
+    ],
+  },
+  Support:{emoji:"🎧", health:"🔴",
+    tabs:["Dashboard","Tickets","SLA","Customer Health","AI Replies","FAQ","Knowledge","Escalation"],
+    kpis:[["تذاكر مفتوحة","14"],["متأخرة +24س","6"],["متوسط الاستجابة","5.2 س"]],
+    tickets:[
+      {customer:"Mona Beauty", subject:"طلب استرجاع", priority:"عالية", age:"26 ساعة"},
+      {customer:"Khaled Fitness", subject:"مشكلة تقنية في اللاندنج", priority:"متوسطة", age:"14 ساعة"},
+      {customer:"Nour Store", subject:"سؤال عن الفاتورة", priority:"منخفضة", age:"3 ساعات"},
+    ],
+  },
+  Finance:{emoji:"📈", health:"🟢",
+    tabs:["Dashboard","Revenue","Expenses","Payroll","Taxes","Profit","Cashflow","Forecast"],
+    kpis:[["فواتير متأخرة","0"],["التدفق النقدي","إيجابي"],["مصروفات الشهر","198K ج"]],
+    finance:{revenue:"482,300 ج", expenses:"198,400 ج", profit:"283,900 ج", payroll:"142,000 ج", taxes:"38,200 ج", cashflow:"إيجابي +12%", forecast:"توقع نمو 8% الشهر الجاي"},
+  },
+  HR:{emoji:"🧑‍💼", health:"🟢",
+    tabs:["Dashboard","Employees","Attendance","Leaves","Hiring","Performance","AI HR"],
+    kpis:[["طلبات إجازة","2"],["توظيف مفتوح","1"],["رضا الموظفين","88%"]],
+    employees:[
+      {name:"Omar", role:"Strategy Lead", status:"حاضر"},
+      {name:"Ahmed", role:"Developer", status:"حاضر"},
+      {name:"Mennah", role:"Designer", status:"إجازة"},
+    ],
+  },
+  Development:{emoji:"💻", health:"🟢", tabs:["Dashboard","Tasks","Knowledge","Reports"], kpis:[["Sprint Tasks","2"],["Bugs مفتوحة","3"],["Deploys الأسبوع","4"]],
+    sop:{title:"Backend Developer SOP", kpiTargets:[["الالتزام بالمواعيد","≥95%"],["نجاح الـ APIs من أول مراجعة","≥95%"],["Bugs حرجة","صفر"],["زمن استجابة APIs","<300ms"]],
+      rules:["يمنع البدء في أي تطوير قبل اعتماد الـ Business Requirements","كل تعديل على قاعدة البيانات لازم يتم عبر Migration Scripts — يمنع التعديل المباشر","يمنع دمج أي كود في الفرع الرئيسي من غير Code Review من Head of Development","يمنع حفظ كلمات مرور أو مفاتيح API داخل الكود أو الـ Git repo"],
+      workflow:["استلام المهمة وفهم الـ Business Logic","تجهيز بيئة العمل (Branch جديد)","تصميم الحل قبل الكود","التنفيذ: Database→Models→Business Logic→Controllers→Routes→Auth→Validation→Logging","اختبار شامل (الوظيفة، البيانات، الأخطاء، الأداء، الأمان)","مراجعة الكود الذاتية","رفع الكود (Commit→Push→PR)","Code Review من Head of Development","دعم فريق Frontend/Mobile","إغلاق المهمة وتحديث التوثيق"]},
+  },
+  Design:{emoji:"🎨", health:"🟢", tabs:["Dashboard","Tasks","Knowledge","Reports"], kpis:[["تسليمات اليوم","5"],["طلبات قيد التنفيذ","9"],["متوسط التسليم","1.8 يوم"]],
+    sop:{title:"Graphic Designer SOP", kpiTargets:[["الالتزام بالمواعيد","≥95%"],["إعادة العمل (Rework)","<10%"],["أخطاء إملائية/فنية","صفر"],["الالتزام بالهوية البصرية","100%"]],
+      rules:["يمنع بدء أي تصميم بدون Creative Brief معتمد","يمنع استخدام عناصر أو خطوط أو صور غير مرخصة","يمنع حفظ الملفات خارج هيكل المجلدات المعتمد","يمنع إرسال الملفات النهائية مباشرة لأي قسم من غير المرور بمدير السوشيال ميديا"],
+      workflow:["استلام المهمة ومراجعة الـ Creative Brief بالكامل","تنفيذ التصميم بالهوية البصرية المعتمدة","المراجعة الذاتية (شعار، ألوان، محاذاة، مساحات)","رفع التصميم للمراجعة على Google Drive","تنفيذ التعديلات لو موجودة","اعتماد التصميم وحفظ النسخة النهائية"]},
+  },
+  "Client Success":{emoji:"🌟", health:"🟢", tabs:["Dashboard","Onboarding Journey","Mentors","Marketing Handoff","Knowledge","Reports"], kpis:[["عملاء في برنامج الـ14 يوم","6"],["نسبة رضا العملاء (CSAT)","91%"],["عملاء جاهزين للتسويق","4"]],
+    sop:{title:"Head of Client Success + Client Marketing Specialist SOPs", kpiTargets:[["نسبة إكمال برنامج الـ14 يوم","الهدف"],["معدل التصعيدات","أقل ما يمكن"],["نسبة التسليم في الموعد","100%"],["نسبة الاحتفاظ بالعملاء","الهدف"]],
+      rules:["مفيش عميل بيتسلّم للتسويق قبل اعتماد جاهزية البراند والحسابات بالكامل","توزيع العملاء على الـ Mentors حسب الطاقة الاستيعابية — مفيش ضغط زيادة على مدرب واحد","أي حالة متعثرة (عميل مش بيرد، غير راضي، عايز يلغي) لازم توثيق فوري ومتابعة يومية","الميديا باير ميقدرش يشغّل حملة قبل ما يتأكد من Pixel وCAPI وصلاحيات الحسابات كاملة"],
+      workflow:["استلام العميل من المبيعات والتأكد من اكتمال البيانات","توزيع العميل على Mentor مناسب","متابعة برنامج الـ14 يوم يوميًا","اعتماد جاهزية العميل (هوية، حسابات، براند)","تسليم العميل لـ Client Marketing Specialist (ميديا باير)","الميديا باير: تحليل النشاط التجاري ثم إطلاق الحملة ومتابعتها يوميًا","تقييم نهاية الفترة المجانية وتوصية بالتحويل للخدمة المدفوعة"]},
+  },
+};
+let deptTab = "Dashboard";
+
+function renderDepartmentsIndex(){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade"><div class="page-title">Departments</div><div class="page-sub">كل قسم عنده OS كامل — مش dashboard واحد، موديولات كاملة خاصة بطبيعة شغله</div></div>
+    <div class="page-body fade">
+      <div class="grid g4">
+        ${Object.entries(DEPARTMENTS).map(([name,d],i)=>{
+          const accents=["accent-lime","accent-lilac","accent-peach","accent-sky"];
+          return `<div class="card ${accents[i%4]}" onclick="navigate(['departments','${name}'])" style="cursor:pointer; border:none; box-shadow:none;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:18px; margin-bottom:10px;">${d.emoji}</div>
+            <div style="font-size:13.5px; font-weight:700;">${name}</div>
+            <div style="font-size:11px; color:var(--text-dim); margin-top:3px;">${d.health} الحالة · ${d.tabs.length} موديولات</div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
+function renderDepartmentOS(name){
+  deptTab = "Dashboard";
+  renderDeptShell(name);
+}
+function switchDeptTab(name, tab){ deptTab = tab; renderDeptShell(name); }
+
+function renderDeptShell(name){
+  const d = DEPARTMENTS[name];
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:38px;height:38px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:18px;">${d.emoji}</div>
+        <div><div class="page-title">${name} OS</div><div class="page-sub">${d.health} الحالة — AI Department Coach نشط</div></div>
+      </div>
+      <div class="tab-row">
+        ${d.tabs.map(t=>`<button class="tab-btn ${deptTab===t?'active':''}" onclick="switchDeptTab('${name}','${t}')">${t}</button>`).join("")}
+      </div>
+    </div>
+    <div class="page-body fade" id="dept-tab-body"></div>`;
+  renderDeptTabBody(name);
+}
+
+function renderDeptTabBody(name){
+  const d = DEPARTMENTS[name];
+  const el = document.getElementById('dept-tab-body');
+  const tab = deptTab;
+
+  // Dashboard — always the KPI + AI coach + OKRs overview
+  if(tab==="Dashboard"){
+    el.innerHTML = `
+      <div class="grid g3" style="margin-bottom:14px;">
+        ${d.kpis.map(k=>`<div class="card"><div class="kpi-label">${k[0]}</div><div class="kpi-value" style="font-size:19px;">${k[1]}</div></div>`).join("")}
+      </div>
+      <div class="grid" style="grid-template-columns:1.3fr 1fr;">
+        <div class="card">
+          <div style="font-size:12.5px; font-weight:600; margin-bottom:9px;">🤖 AI Department Coach</div>
+          <div class="ai-card">فيه ٣ مهام متأخرة عن المتوسط الأسبوعي في القسم ده — عايزني ألخصها؟</div>
+          <div class="ai-card">أداء الأسبوع ده أعلى من المتوسط الشهري بـ 8%.</div>
+        </div>
+        <div class="card">
+          <div style="font-size:12.5px; font-weight:600; margin-bottom:9px;">أهداف القسم (OKRs)</div>
+          <div style="margin-bottom:9px;"><div style="font-size:11.5px; margin-bottom:4px; display:flex; justify-content:space-between;"><span>الهدف الشهري</span><span class="mono">72%</span></div><div class="bar-track"><div class="bar-fill" style="width:72%;"></div></div></div>
+          <div><div style="font-size:11.5px; margin-bottom:4px; display:flex; justify-content:space-between;"><span>جودة التنفيذ</span><span class="mono">91%</span></div><div class="bar-track"><div class="bar-fill" style="width:91%; background:var(--signal);"></div></div></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Knowledge — renders the real SOP linked to this department, if one exists
+  if(tab==="Knowledge"){
+    if(!d.sop){
+      el.innerHTML = `<div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش SOP مرفوع للقسم ده لسه</div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <span style="font-size:16px;">📚</span><span style="font-size:13px; font-weight:700;">${d.sop.title}</span>
+          <span class="badge b-success" style="margin-right:auto;">معتمد</span>
+        </div>
+        <div class="grid g4">
+          ${d.sop.kpiTargets.map(k=>`<div style="background:var(--surface-2); border-radius:10px; padding:10px;"><div style="font-size:10px; color:var(--text-faint);">${k[0]}</div><div style="font-size:14px; font-weight:700; margin-top:2px;">${k[1]}</div></div>`).join("")}
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:10px;">قواعد لا يجوز مخالفتها</div>
+        ${d.sop.rules.map(r=>`<div class="row-item"><span style="color:#F87171; flex-shrink:0;">✕</span><span style="font-size:12px;">${r}</span></div>`).join("")}
+      </div>
+      <div class="card">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:10px;">خطوات العمل (Workflow)</div>
+        ${d.sop.workflow.map((w,i)=>`<div class="row-item"><span class="mono" style="color:var(--text-faint); flex-shrink:0;">${String(i+1).padStart(2,'0')}</span><span style="font-size:12px;">${w}</span></div>`).join("")}
+      </div>`;
+    return;
+  }
+  if(tab.startsWith("AI ")){
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:8px;">🤖 ${tab}</div>
+        <p style="font-size:12.5px; line-height:1.75; color:var(--text-dim);">بيراقب كل نشاط القسم ويقترح تحسينات باستمرار — مش أداة بتترد على أسئلة بس.</p>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:8px;">توصيات دلوقتي</div>
+        <div class="ai-card">راجع أداء الأسبوع ده مقابل المتوسط الشهري</div>
+        <div class="ai-card alert">فيه عنصر واحد محتاج متابعة عاجلة</div>
+      </div>
+      <div class="card"><div style="display:flex; gap:8px;"><input class="ai-input" style="flex:1;" placeholder="اسأل ${tab}..."><button class="btn btn-primary">اسأل</button></div></div>`;
+    return;
+  }
+
+  // Sales-specific tabs
+  if(name==="Sales" && tab==="Leads"){
+    el.innerHTML = renderTable(["العميل المحتمل","المرحلة","القيمة","المسؤول"], d.leads.map(l=>[l.name,l.stage,l.value,l.owner]));
+    return;
+  }
+  if(name==="Sales" && tab==="Pipeline"){
+    el.innerHTML = `<div class="grid g4">` + d.pipeline.map(col=>`
+      <div class="card">
+        <div style="font-size:12px; font-weight:700; margin-bottom:10px; color:var(--text-dim);">${col.stage}</div>
+        ${col.items.map(it=>`<div style="background:var(--surface-2); border-radius:10px; padding:9px 11px; margin-bottom:7px; font-size:12px;">${it}</div>`).join("")}
+      </div>`).join("") + `</div>`;
+    return;
+  }
+
+  // Marketing-specific
+  if(name==="Marketing" && tab==="Campaigns"){
+    el.innerHTML = renderTable(["الحملة","الحالة","الأداء","الميزانية"], d.campaigns.map(c=>[c.name,c.status,c.performance,c.budget]));
+    return;
+  }
+
+  // Execution-specific
+  if(name==="Execution" && tab==="Projects"){
+    el.innerHTML = renderTable(["المشروع","الحالة","المسؤول"], d.projects.map(p=>[p.name,p.status,p.owner]));
+    return;
+  }
+
+  // Support-specific
+  if(name==="Support" && tab==="Tickets"){
+    el.innerHTML = renderTable(["العميل","الموضوع","الأولوية","العمر"], d.tickets.map(t=>[t.customer,t.subject,t.priority,t.age]));
+    return;
+  }
+
+  // Finance-specific number tabs
+  if(name==="Finance" && ["Revenue","Expenses","Payroll","Taxes","Profit","Cashflow","Forecast"].includes(tab)){
+    const map = {Revenue:"revenue",Expenses:"expenses",Payroll:"payroll",Taxes:"taxes",Profit:"profit",Cashflow:"cashflow",Forecast:"forecast"};
+    el.innerHTML = `<div class="card"><div class="kpi-label">${tab}</div><div class="kpi-value" style="font-size:28px;">${d.finance[map[tab]]}</div>${svgLine([30,40,35,50,45,60,58,65,70,75],'#6366F1')}</div>`;
+    return;
+  }
+
+  // HR-specific
+  if(name==="HR" && tab==="Employees"){
+    el.innerHTML = renderTable(["الموظف","الدور","الحالة"], d.employees.map(e=>[e.name,e.role,e.status]));
+    return;
+  }
+
+  // Generic fallback for any tab without bespoke mock data
+  el.innerHTML = `<div class="card" style="text-align:center; padding:44px 20px; color:var(--text-faint); font-size:12.5px;">
+    محتوى "${tab}" هيتفصّل بالكامل في جولة تصميم لاحقة — الـ tab والـ routing جاهزين من دلوقتي.
+  </div>`;
+}
+
+function renderTable(headers, rows){
+  return `<div class="card" style="overflow-x:auto; padding:6px;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead><tr>${headers.map(h=>`<th style="text-align:right; padding:10px 12px; color:var(--text-faint); font-weight:600; font-size:11px;">${h}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(r=>`<tr style="border-top:1px solid var(--border-soft);">${r.map(c=>`<td style="padding:10px 12px;">${c}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table>
+  </div>`;
+}
+
+
+/* ================= EMPLOYEES ================= */
+const EMPLOYEES = {
+  omar:{name:"Omar", role:"Strategy Lead", score:88, dept:"Marketing"},
+  ahmed:{name:"Ahmed", role:"Developer", score:79, dept:"Development"},
+  mennah:{name:"Mennah", role:"Designer", score:93, dept:"Design"},
+};
+const EMP_TABS = ["Home","Today","My Tasks","Calendar","Messages","Meetings","Files","Knowledge","My Customers","Performance","Reports","Goals","Training","AI Assistant","Settings"];
+let empTaskView = "list"; // list | kanban
+let empCalView = "weekly"; // daily | weekly | monthly
+
+function renderEmpTabBody(id){
+  const e = EMPLOYEES[id];
+  const el = document.getElementById('emp-tab-body');
+  const tab = empTab;
+
+  if(tab==="Home"){
+    el.innerHTML = `
+      <div class="grid g4" style="margin-bottom:14px;">
+        <div class="card"><div class="kpi-label">درجة الأداء</div><div class="kpi-value">${e.score}</div></div>
+        <div class="card"><div class="kpi-label">مهام النهاردة</div><div class="kpi-value">٤</div></div>
+        <div class="card"><div class="kpi-label">مهام متأخرة</div><div class="kpi-value" style="color:var(--red);">٣</div></div>
+        <div class="card"><div class="kpi-label">اجتماعات النهاردة</div><div class="kpi-value">٢</div></div>
+      </div>
+      <div class="grid" style="grid-template-columns:1.3fr 1fr; margin-bottom:14px;">
+        <div class="card">
+          <div style="font-size:12.5px; font-weight:600; margin-bottom:9px;">أولويات النهاردة</div>
+          ${[["اعتماد استراتيجية المحتوى — Sara Hossam", false],["مكالمة متابعة — Nour Store", false],["مراجعة تحليل منافسين", true]].map(t=>`
+            <div class="row-item"><span style="width:15px;height:15px;border-radius:5px;border:2px solid ${t[1]?'var(--signal)':'var(--slate-200)'}; background:${t[1]?'var(--signal)':'transparent'}; display:flex;align-items:center;justify-content:center; color:#fff; font-size:9px;">${t[1]?'✓':''}</span>
+            <span style="font-size:12px; ${t[1]?'color:var(--slate); text-decoration:line-through;':''}">${t[0]}</span></div>`).join("")}
+        </div>
+        <div class="card">
+          <div style="font-size:12.5px; font-weight:600; margin-bottom:9px;">🤖 لاحظ الـ AI</div>
+          <div class="ai-card">حمل شغلك أعلى من المتوسط بـ 20% الأسبوع ده — خد استراحة بعد الساعة 3.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:12.5px; font-weight:600; margin-bottom:9px;">أهداف النهاردة</div>
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-faint); margin-bottom:6px;"><span>إنجاز 4 مهام</span><span class="mono">2/4</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:50%;"></div></div>
+      </div>`;
+    return;
+  }
+
+  if(tab==="Today"){
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px; background:var(--indigo-bg);">
+        <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:4px;">Today Mode</div>
+        <p style="font-size:12px; color:var(--text-dim);">مفيش غير اللي محتاجه النهاردة بس — مهام، اجتماعات، ديدلاينز، ورسائل عاجلة.</p>
+      </div>` + renderTable(["الوقت","الحدث"], [
+      ["9:00","Daily standup — Marketing"],["10:30","مكالمة متابعة — Nour Store"],
+      ["1:00","استراحة الغدا"],["3:00","مراجعة استراتيجية سارة مع Omar"],["5:00","تحديث الـ Reports الأسبوعية"],
+    ]);
+    return;
+  }
+
+  if(tab==="My Tasks"){
+    const tasksData = [
+      {title:"اعتماد استراتيجية المحتوى — Sara Hossam", status:"مفتوحة", priority:"عالية"},
+      {title:"مكالمة متابعة — Nour Store", status:"مفتوحة", priority:"متوسطة"},
+      {title:"مراجعة تحليل منافسين", status:"مكتملة", priority:"منخفضة"},
+      {title:"تحديث خطة الـ 90 يوم", status:"مفتوحة", priority:"عالية"},
+    ];
+    let body;
+    if(empTaskView==="list"){
+      body = renderTable(["المهمة","الحالة","الأولوية"], tasksData.map(t=>[t.title,t.status,t.priority]));
+    } else {
+      const cols = [["مفتوحة","To Do"],["قيد التنفيذ","In Progress"],["مكتملة","Done"]];
+      body = `<div class="grid g3">` + cols.map(c=>`
+        <div class="card"><div style="font-size:12px; font-weight:700; margin-bottom:10px; color:var(--text-dim);">${c[1]}</div>
+          ${tasksData.filter(t=>t.status===c[0] || (c[0]==='قيد التنفيذ' && false)).map(t=>`<div style="background:var(--surface-2); border-radius:10px; padding:9px 11px; margin-bottom:7px; font-size:12px;">${t.title}</div>`).join("") || '<div style="font-size:11px; color:var(--text-faint);">مفيش</div>'}
+        </div>`).join("") + `</div>`;
+    }
+    el.innerHTML = `
+      <div style="display:flex; gap:6px; margin-bottom:12px;">
+        <button class="btn ${empTaskView==='list'?'btn-primary':'btn-ghost'}" onclick="empTaskView='list'; renderEmpTabBody('${id}')">List</button>
+        <button class="btn ${empTaskView==='kanban'?'btn-primary':'btn-ghost'}" onclick="empTaskView='kanban'; renderEmpTabBody('${id}')">Kanban</button>
+      </div>` + body;
+    return;
+  }
+
+  if(tab==="Calendar"){
+    el.innerHTML = `
+      <div style="display:flex; gap:6px; margin-bottom:12px;">
+        ${["daily","weekly","monthly"].map(v=>`<button class="btn ${empCalView===v?'btn-primary':'btn-ghost'}" onclick="empCalView='${v}'; renderEmpTabBody('${id}')">${v==='daily'?'يومي':v==='weekly'?'أسبوعي':'شهري'}</button>`).join("")}
+      </div>
+      <div class="grid g4">${["الأحد","الاتنين","التلات","الأربع"].map((d,i)=>`
+        <div class="card"><div style="font-size:11px; color:var(--text-faint); margin-bottom:8px;">${d}</div>
+          ${i===0?'<div style="background:var(--indigo-bg); border-radius:8px; padding:6px 8px; font-size:11px; margin-bottom:5px;">3:00 مراجعة سارة</div>':'<div style="font-size:11px; color:var(--text-faint);">مفيش مواعيد</div>'}
+        </div>`).join("")}</div>`;
+    return;
+  }
+
+  if(tab==="Messages"){
+    el.innerHTML = `
+      <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:8px;">أقسام</div>
+      <div class="card" style="margin-bottom:12px;"><div class="row-item"><div class="avatar-sm" style="background:var(--indigo);">M</div><div style="flex:1;"><div style="font-size:12.5px;">Omar منشنك في # Marketing</div><div style="font-size:10.5px; color:var(--text-faint);">من 4 ساعات</div></div></div></div>
+      <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:8px;">خاص</div>
+      <div class="card" style="margin-bottom:12px;"><div class="row-item"><div class="avatar-sm" style="background:var(--grad-primary);">S</div><div style="flex:1;"><div style="font-size:12.5px;">رسالة خاصة من Sara — سؤال عن التسليم</div><div style="font-size:10.5px; color:var(--text-faint);">من يوم</div></div></div></div>
+      <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:8px;">من المدير</div>
+      <div class="card"><div class="row-item"><div class="avatar-sm" style="background:linear-gradient(135deg,#F59E0B,#DC2626);">MJ</div><div style="flex:1;"><div style="font-size:12.5px;">راجع تقرير الأداء الشهري لو سمحت</div><div style="font-size:10.5px; color:var(--text-faint);">من يومين</div></div></div></div>`;
+    return;
+  }
+
+  if(tab==="Meetings"){
+    el.innerHTML = renderTable(["الاجتماع","الوقت","المشاركين","حالة الملخص"], [
+      ["مراجعة استراتيجية سارة","النهاردة 3:00 م","Omar، Sara","لسه"],
+      ["Sprint Review","الخميس 11:00 ص","فريق Development","جاهز ✓"],
+    ]) + `<div class="card" style="margin-top:12px;"><div style="font-size:12.5px; font-weight:600; margin-bottom:6px;">🤖 ملخص AI — Sprint Review</div><p style="font-size:12px; color:var(--text-dim);">اتفقنا على تأجيل الـ deploy ليوم الأحد. Action Items: مراجعة الـ QA، تحديث الـ changelog.</p></div>`;
+    return;
+  }
+
+  if(tab==="Files"){
+    el.innerHTML = `
+      <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">
+        ${["الكل","شخصية","القسم","العملاء","المفضلة"].map((f,i)=>`<button class="btn ${i===0?'btn-primary':'btn-ghost'}" style="padding:6px 12px;">${f}</button>`).join("")}
+      </div>` + renderTable(["الملف","المصدر","الحجم"], [["AI_Strategy_Draft_v2.pdf","# Marketing","0.8 MB"],["Competitor_Analysis.docx","# Marketing","0.2 MB"],["ملاحظاتي_الشخصية.txt","شخصي","4 KB"]]);
+    return;
+  }
+
+  if(tab==="Knowledge"){
+    el.innerHTML = `
+      <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:8px;">SOPs القسم</div>
+      <div class="card" style="margin-bottom:12px;">${renderTable(["العنوان","آخر تحديث"], [["خطوات مراجعة الاستهداف الأسبوعية","من 3 أيام"],["دليل الرد على عملاء VIP","من أسبوعين"]])}</div>
+      <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:8px;">سياسات الشركة</div>
+      <div class="card">${renderTable(["السياسة"], [["سياسة الإجازات"],["سياسة الاسترجاع"]])}</div>`;
+    return;
+  }
+
+  if(tab==="My Customers"){
+    const mine = Object.entries(CUSTOMERS).filter(([cid,c])=>c.employee && c.employee.includes(e.name));
+    el.innerHTML = mine.length ? `<div class="card" style="padding:6px;">` + mine.map(([cid,c])=>`
+      <div onclick="navigate(['customers','${cid}'])" style="display:flex; align-items:center; gap:12px; padding:12px; border-radius:14px; cursor:pointer;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+        <div class="avatar-sm" style="background:var(--grad-primary); width:34px; height:34px; border-radius:10px;">${c.name[0]}</div>
+        <div style="flex:1;"><div style="font-size:12.5px; font-weight:600;">${c.name}</div><div style="font-size:11px; color:var(--text-faint);">${c.stage}</div></div>
+        <span>${c.health}</span>
+      </div>`).join("") + `</div>` : `<div class="card" style="text-align:center; padding:36px; color:var(--text-faint); font-size:12.5px;">مفيش عملاء متحددين له دلوقتي</div>`;
+    return;
+  }
+
+  if(tab==="Performance"){
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px;"><div class="kpi-label">درجة الأداء الحالية</div><div class="kpi-value" style="font-size:28px;">${e.score}</div>${svgLine([70,74,72,80,78,85,82,88,86,e.score],'#34D399')}</div>
+      <div class="grid g4">
+        <div class="card"><div class="kpi-label">مهام مكتملة</div><div class="kpi-value" style="font-size:18px;">42</div></div>
+        <div class="card"><div class="kpi-label">مهام متأخرة</div><div class="kpi-value" style="font-size:18px;">3</div></div>
+        <div class="card"><div class="kpi-label">متوسط وقت الرد</div><div class="kpi-value" style="font-size:18px;">18 د</div></div>
+        <div class="card"><div class="kpi-label">جودة العمل</div><div class="kpi-value" style="font-size:18px;">91%</div></div>
+      </div>`;
+    return;
+  }
+
+  if(tab==="Reports"){
+    el.innerHTML = `
+      <div class="tab-row" style="margin-top:0;"><button class="tab-btn active">يومي</button><button class="tab-btn">أسبوعي</button><button class="tab-btn">شهري</button></div>
+      <div style="margin-top:14px;">` + renderTable(["البند","القيمة"], [["مهام مكتملة النهاردة","3"],["اجتماعات","2"],["رسائل اترد عليها","14"],["أهداف على المسار","نعم ✓"]]) + `</div>`;
+    return;
+  }
+
+  if(tab==="Goals"){
+    el.innerHTML = ["ربع سنوي — 65%","شهري — 80%","أسبوعي — 90%","يومي — 50%"].map(g=>{
+      const [label,pct] = g.split(" — ");
+      return `<div class="card" style="margin-bottom:10px;"><div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;"><span>${label}</span><span class="mono">${pct}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct};"></div></div></div>`;
+    }).join("");
+    return;
+  }
+
+  if(tab==="Training"){
+    el.innerHTML = `<div class="card" style="margin-bottom:12px;"><div style="font-size:12.5px; font-weight:600; margin-bottom:10px;">مسار التدريب الحالي</div>
+      <div style="margin-bottom:10px;"><div style="font-size:11.5px; margin-bottom:4px; display:flex; justify-content:space-between;"><span>أساسيات الـ AI Coaching</span><span class="mono">60%</span></div><div class="bar-track"><div class="bar-fill" style="width:60%;"></div></div></div>
+      <div><div style="font-size:11.5px; margin-bottom:4px; display:flex; justify-content:space-between;"><span>مهارات التفاوض المتقدمة</span><span class="mono">100%</span></div><div class="bar-track"><div class="bar-fill" style="width:100%; background:var(--signal);"></div></div></div>
+    </div>
+    <div class="card"><div style="font-size:12.5px; font-weight:600; margin-bottom:8px;">🏆 الشهادات</div><div style="font-size:12px; color:var(--text-dim);">مهارات التفاوض المتقدمة — 15 يوليو</div></div>`;
+    return;
+  }
+
+  if(tab==="AI Assistant"){
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:8px;">🤖 مساعدك الشخصي</div>
+        <div class="ai-card">عندك 3 مهام متأخرة موزعة على عميلتين. أقترح تأجّل مكالمة الـ 4 لبكرة وتركز على اعتماد استراتيجية سارة النهاردة.</div>
+      </div>
+      <div class="card"><div style="display:flex; gap:8px;"><input class="ai-input" style="flex:1;" placeholder="اسأل مساعدك الشخصي..."><button class="btn btn-primary">اسأل</button></div></div>`;
+    return;
+  }
+
+  if(tab==="Settings"){
+    el.innerHTML = `<div class="card"><div style="font-size:12.5px; font-weight:600; margin-bottom:8px;">الإشعارات</div><p style="font-size:12px; color:var(--text-dim);">الـ AI بيقرر إيه المهم بس — مفيش سبام.</p></div>`;
+    return;
+  }
+}
+
+
+
+/* ================= COLLABORATION HUB — full workspace ================= */
+const CHANNELS = {
+  "ch-marketing":{name:"Marketing", dept:"Marketing", visibility:"public", members:9, locked:false,
+    messages:[
+      {author:"Mennah", color:"linear-gradient(135deg,#22D3EE,#6366F1)", text:"خلصنا تصميم بانرات حملة أغسطس، هرفعها دلوقتي", time:"10:12"},
+      {author:"Omar", color:"linear-gradient(135deg,#6366F1,#A855F7)", voice:true, text:"🎙️ رسالة صوتية (32 ثانية) — النص المستخرج تلقائيًا: \"محتاجين نأجل إطلاق الحملة يوم لحد ما نخلص مراجعة الاستهداف، وابعتولي التقرير بتاع الأسبوع اللي فات.\"", time:"10:12", autoAction:"📚 اتحوّلت لملخص + اتخزنت في قاعدة المعرفة تلقائيًا"},
+      {author:"Omar", color:"linear-gradient(135deg,#6366F1,#A855F7)", text:"العميلة سارة مستنية التصميم بتاعها من إمبارح", time:"10:13", aiSuggestions:["إنشاء مهمة؟","تعيين مصمم؟","تذكير بكرة؟"]},
+      {author:"AI Department Coach", ai:true, text:"لاحظت إن حملة \"Ramadan Launch\" معدل التحويل بتاعها أقل من المتوسط بـ 40%. عايزاكي تراجعوا الاستهداف؟", time:"10:14", task:"مهمة اتعملت: مراجعة استهداف Ramadan Launch"},
+      {author:"Omar", color:"linear-gradient(135deg,#6366F1,#A855F7)", text:"ده SOP جديد لازم يتحفظ: خطوات مراجعة الاستهداف الأسبوعية", time:"10:22", autoAction:"📚 الرسالة دي اتضافت تلقائيًا لقاعدة المعرفة"},
+    ],
+    files:[{name:"August_Campaign_Banners.zip", by:"Mennah", size:"12.4 MB"},{name:"Ramadan_Launch_Report.pdf", by:"Omar", size:"1.1 MB"}],
+    tasks:[{label:"مراجعة استهداف Ramadan Launch", assignee:"Omar", status:"open"},{label:"تصميم بانر سارة", assignee:"Mennah", status:"open"}],
+    meetings:[{title:"مراجعة أداء الحملات الأسبوعية", time:"الخميس 4:00 م", attendees:"Marketing + Media Buying"}],
+    pinned:[{author:"Omar", text:"خطة أغسطس الكاملة موجودة في قاعدة المعرفة تحت اسم Aug_Plan_v3"}],
+    knowledge:[{title:"خطوات مراجعة الاستهداف الأسبوعية", addedBy:"Omar"}],
+    aiSummary:"القسم مركّز على حملة أغسطس والمتابعة مع سارة. حملة Ramadan Launch محتاجة مراجعة استهداف عاجلة — معدل التحويل تحت المتوسط بـ40%.",
+    aiSuggestionsList:["إيقاف أو تعديل استهداف Ramadan Launch خلال 24 ساعة","تعيين مصمم لتسليم سارة المتأخر","جدولة مراجعة أداء أسبوعية ثابتة"],
+  },
+  "ch-sales":{name:"Sales", dept:"Sales", visibility:"public", members:6, locked:false,
+    messages:[{author:"Sara", color:"linear-gradient(135deg,#FBBF24,#F87171)", text:"قفلنا صفقة Nour Store! ١٥,٠٠٠ جنيه 🎉", time:"9:40"},
+      {author:"AI Department Coach", ai:true, text:"مبروك! ده بيرفع معدل الإغلاق للأسبوع لـ 26%.", time:"9:41"}],
+    files:[], tasks:[{label:"متابعة عقد Nour Store", assignee:"Sara", status:"open"}], meetings:[], pinned:[], knowledge:[],
+    aiSummary:"أداء قوي هذا الأسبوع — صفقة جديدة مغلقة برفع معدل الإغلاق لـ26%.", aiSuggestionsList:["متابعة توقيع العقد النهائي مع Nour Store"],
+  },
+  "ch-execution":{name:"Execution", dept:"Execution", visibility:"public", members:5, locked:false,
+    messages:[{author:"Ahmed", color:"linear-gradient(135deg,#34D399,#22D3EE)", text:"في بلوكر في تسليم مشروع Khaled Fitness — مستني اعتماد من الفاينانس", time:"11:02", thread:"3 ردود في الـ Thread"}],
+    files:[], tasks:[{label:"متابعة اعتماد الفاينانس", assignee:"Ahmed", status:"open"}], meetings:[], pinned:[], knowledge:[],
+    aiSummary:"مشروع Khaled Fitness متوقف على اعتماد مالي — بلوكر واحد نشط.", aiSuggestionsList:["تسريع اعتماد الفاينانس لمشروع Khaled Fitness"],
+  },
+  "ch-support":{name:"Support", dept:"Support", visibility:"public", members:4, locked:false,
+    messages:[
+      {author:"AI Department Coach", ai:true, text:"6 تذاكر متأخرة أكتر من 24 ساعة. أعلى واحدة أولوية: عميلة Mona Beauty طلبت استرجاع.", time:"8:15", task:"مهمة اتعملت: متابعة طلب استرجاع Mona Beauty"},
+      {author:"Nadia", color:"linear-gradient(135deg,#F87171,#FBBF24)", text:"تذكرة العميل خالد — المشكلة اتحلت", time:"9:02", autoAction:"🔒 AI أقفل التذكرة تلقائيًا"},
+      {author:"Nadia", color:"linear-gradient(135deg,#F87171,#FBBF24)", text:"هنحتاج اجتماع مع فريق الـ Dev بخصوص باقي التذاكر التقنية", time:"9:10", autoAction:"📅 AI جدول اجتماع تلقائيًا"},
+    ],
+    files:[], tasks:[{label:"متابعة استرجاع Mona Beauty", assignee:"Nadia", status:"open"}],
+    meetings:[{title:"مراجعة تذاكر تقنية مع Dev", time:"النهاردة 5:00 م", attendees:"Support + Development"}],
+    pinned:[], knowledge:[],
+    aiSummary:"6 تذاكر متأخرة، تذكرة خالد اتقفلت، واجتماع اتجدول مع Dev لباقي التذاكر التقنية.", aiSuggestionsList:["إعطاء أولوية لطلب استرجاع Mona Beauty","تدعيم فريق الـ Support بعضو إضافي"],
+  },
+  "ch-dev":{name:"Development", dept:"Development", visibility:"public", members:4, locked:false,
+    messages:[{author:"Ahmed", color:"linear-gradient(135deg,#34D399,#22D3EE)", text:"عملت deploy لتحديث الداشبورد", time:"12:30"}],
+    files:[], tasks:[], meetings:[], pinned:[], knowledge:[], aiSummary:"Deploy جديد اتعمل بنجاح.", aiSuggestionsList:[],
+  },
+  "ch-design":{name:"Design", dept:"Design", visibility:"public", members:3, locked:false,
+    messages:[{author:"Mennah", color:"linear-gradient(135deg,#22D3EE,#6366F1)", text:"رفعت 5 تصاميم جديدة", time:"1:15"}],
+    files:[{name:"Design_Batch_5.zip", by:"Mennah", size:"20 MB"}], tasks:[], meetings:[], pinned:[], knowledge:[],
+    aiSummary:"5 تصاميم جديدة اتسلموا.", aiSuggestionsList:[],
+  },
+  "ch-finance":{name:"Finance", dept:"Finance", visibility:"private", members:2, locked:true,
+    messages:[{author:"System", ai:true, text:"القناة دي محدودة لفريق الـ Finance والـ Management بس. باقي الموظفين مش بيشوفوا المحتوى ده نهائيًا.", time:"—"}],
+    files:[], tasks:[], meetings:[], pinned:[], knowledge:[], aiSummary:"قناة مقيدة — Owner و Admin بس.", aiSuggestionsList:[],
+  },
+  "ch-announce":{name:"Announcements", dept:"Management", visibility:"public", members:20, locked:false,
+    messages:[{author:"محمد جو", color:"linear-gradient(135deg,#F59E0B,#DC2626)", text:"📣 مبروك للفريق كله — خلصنا الشهر بإيرادات أعلى بـ 12%!", time:"9:00"}],
+    files:[], tasks:[], meetings:[], pinned:[{author:"محمد جو", text:"إعلان الأهداف الجديدة لشهر أغسطس"}], knowledge:[],
+    aiSummary:"إعلانات الشهر إيجابية عمومًا.", aiSuggestionsList:[],
+  },
+  "dm-omar":{name:"Omar", dept:null, visibility:"private", members:2, locked:false, dm:true,
+    messages:[{author:"Omar", color:"linear-gradient(135deg,#6366F1,#A855F7)", text:"محمد، محتاج نتكلم عن خطة الـ Strategy team التوسع", time:"2:40"}],
+    files:[], tasks:[], meetings:[], pinned:[], knowledge:[], aiSummary:"محادثة خاصة عن توسعة فريق الاستراتيجية.", aiSuggestionsList:[],
+  },
+};
+const CHANNEL_ORDER = ["ch-marketing","ch-sales","ch-execution","ch-support","ch-dev","ch-design","ch-finance","ch-announce","dm-omar"];
+let collabTab = "chat";
+
+const HUB_GLOBAL_SECTIONS = [
+  ["workspace","🏠","Workspace"],
+  ["announcements-all","📣","Announcements"],
+];
+const HUB_GLOBAL_BELOW = [
+  ["meetings-all","📅","Meetings"],
+  ["tasks-all","✅","Tasks"],
+  ["pinned-all","📌","Pinned"],
+  ["knowledge-all","📚","Knowledge"],
+  ["files-all","🗂️","Files"],
+  ["archive","🗄️","Archive"],
+];
+
+function renderCollabHub(section){
+  const isAdmin = true; // Owner/Admin viewing — non-admins would not see the gear/manage controls
+  const isChannel = CHANNELS[section] !== undefined;
+
+  document.getElementById('content').innerHTML = `
+    <div style="display:flex; height:calc(100vh - 60px);" class="fade">
+      <div style="width:230px; flex-shrink:0; border-left:1px solid var(--border); overflow-y:auto; padding:14px 10px;">
+        ${HUB_GLOBAL_SECTIONS.map(s=>`
+          <div onclick="navigate(['collab','${s[0]}'])" class="nav-child ${section===s[0]?'active':''}" style="margin-bottom:1px;">
+            <span>${s[1]}</span><span>${s[2]}</span>
+          </div>`).join("")}
+
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 6px 6px;">
+          <span style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; letter-spacing:.05em;">أقسام الشركة</span>
+          ${isAdmin ? `<span onclick="openChannelAdmin()" style="cursor:pointer; color:var(--text-faint); font-size:13px;" title="إدارة القنوات">⚙️</span>` : ''}
+        </div>
+        ${CHANNEL_ORDER.filter(id=>!CHANNELS[id].dm).map(id=>{
+          const c = CHANNELS[id];
+          const active = id===section;
+          return `<div onclick="navigate(['collab','${id}'])" class="nav-child ${active?'active':''}" style="margin-bottom:1px;">
+            <span class="dot"></span><span>${c.name}${c.locked?' 🔒':''}</span>
+          </div>`;
+        }).join("")}
+
+        <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; letter-spacing:.05em; padding:14px 6px 6px;">محادثات خاصة</div>
+        ${CHANNEL_ORDER.filter(id=>CHANNELS[id].dm).map(id=>{
+          const c = CHANNELS[id];
+          const active = id===section;
+          return `<div onclick="navigate(['collab','${id}'])" class="nav-child ${active?'active':''}">
+            <span class="dot"></span><span>${c.name}</span>
+          </div>`;
+        }).join("")}
+        <div class="nav-child" style="opacity:.4; cursor:not-allowed;" title="قريبًا"><span>🎙️</span><span>Voice Rooms (قريبًا)</span></div>
+
+        <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; letter-spacing:.05em; padding:14px 6px 6px;">عبر كل الأقسام</div>
+        ${HUB_GLOBAL_BELOW.map(s=>`
+          <div onclick="navigate(['collab','${s[0]}'])" class="nav-child ${section===s[0]?'active':''}">
+            <span>${s[1]}</span><span>${s[2]}</span>
+          </div>`).join("")}
+
+        ${isAdmin ? `<div onclick="openChannelAdmin()" style="margin-top:10px; padding:7px 9px; border-radius:10px; border:1px dashed var(--border); font-size:12px; color:var(--text-faint); cursor:pointer; text-align:center;">+ إنشاء قناة</div>` : ''}
+      </div>
+
+      <div style="flex:1; display:flex; flex-direction:column; min-width:0;" id="hub-main"></div>
+    </div>
+
+    <!-- Channel Admin Modal -->
+    <div id="channel-admin-overlay" class="palette-overlay" onclick="if(event.target===this) closeChannelAdmin()">
+      <div class="palette-box" style="max-width:520px;">
+        <div style="padding:16px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:14px; font-weight:700;">إدارة القنوات (Admin فقط)</div>
+          <span onclick="closeChannelAdmin()" style="cursor:pointer; color:var(--text-faint);">✕</span>
+        </div>
+        <div style="max-height:420px; overflow-y:auto; padding:14px 18px;">
+          ${CHANNEL_ORDER.filter(id=>!CHANNELS[id].dm).map(id=>{
+            const c = CHANNELS[id];
+            return `<div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border-soft);">
+              <div style="flex:1;"><div style="font-size:12.5px; font-weight:600;">#${c.name}</div><div style="font-size:10.5px; color:var(--text-faint);">${c.dept} · ${c.members} أعضاء</div></div>
+              <button class="btn btn-ghost" style="padding:5px 9px; font-size:10.5px;" onclick="toggleVisibility('${id}')">${c.visibility==='private'?'🔒 خاصة':'🌐 عامة'}</button>
+              <button class="btn btn-ghost" style="padding:5px 9px; font-size:10.5px;">دعوة</button>
+              <button class="btn btn-ghost" style="padding:5px 9px; font-size:10.5px; color:#F87171; border-color:rgba(248,113,113,.3);">أرشفة</button>
+            </div>`;
+          }).join("")}
+        </div>
+        <div style="padding:14px 18px; border-top:1px solid var(--border); font-size:11px; color:var(--text-faint);">
+          الموظفين اللي معندهمش صلاحية مش هيشوفوا القنوات الخاصة أصلًا في الـ sidebar بتاعهم.
+        </div>
+      </div>
+    </div>`;
+  renderHubMain(section);
+}
+
+function renderHubMain(section){
+  if(CHANNELS[section]) return renderChannelWorkspace(section);
+  if(section==='workspace') return renderHubWorkspaceHome();
+  if(section==='announcements-all') return renderChannelWorkspace('ch-announce');
+  if(section==='meetings-all') return renderHubGlobalList('meetings', '📅', 'الاجتماعات', 'title');
+  if(section==='tasks-all') return renderHubGlobalList('tasks', '✅', 'المهام', 'label');
+  if(section==='pinned-all') return renderHubGlobalList('pinned', '📌', 'المثبّت', 'text');
+  if(section==='knowledge-all') return renderHubGlobalList('knowledge', '📚', 'المعرفة', 'title');
+  if(section==='files-all') return renderHubGlobalList('files', '🗂️', 'الملفات', 'name');
+  if(section==='archive') return renderHubArchive();
+}
+
+/** The Hub's default landing page — AI Daily Summary, not a channel. */
+function renderHubWorkspaceHome(){
+  document.getElementById('hub-main').innerHTML = `
+    <div class="hub-header">
+      <div><div class="hub-title">🏠 Workspace</div><div class="hub-meta">ملخص الـ AI اليومي عبر كل أقسام الشركة</div></div>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding:20px 26px;">
+      <div class="card" style="margin-bottom:14px; background:linear-gradient(160deg, var(--indigo-bg), transparent);">
+        <div style="font-size:11px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:8px;">☀️ ملخص الصباح — اتبعت تلقائيًا الساعة 7ص</div>
+        <p style="font-size:13px; line-height:1.8; color:var(--text-dim);">
+          9 أقسام شغالة، Support بس فيه تراكم (6 تذاكر متأخرة). Marketing عندها بلوكر في تسليم سارة. Sales قفلت صفقة جديدة إمبارح. 3 مهام اتولدت تلقائيًا من محادثات الشات النهاردة الصبح.
+        </p>
+      </div>
+      <div class="grid g4" style="margin-bottom:16px;">
+        <div class="card"><div class="kpi-label">مهام مكتملة النهاردة</div><div class="kpi-value" style="font-size:22px;">12</div></div>
+        <div class="card"><div class="kpi-label">مهام متأخرة</div><div class="kpi-value" style="font-size:22px; color:var(--red);">4</div></div>
+        <div class="card"><div class="kpi-label">مشاركة في الشات</div><div class="kpi-value" style="font-size:22px;">87%</div></div>
+        <div class="card"><div class="kpi-label">معرفة جديدة اتضافت</div><div class="kpi-value" style="font-size:22px;">6</div></div>
+      </div>
+      <div class="card">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:10px;">أولويات مقترحة من الـ AI</div>
+        <div class="ai-card critical">راجع بلوكر تسليم سارة في # Marketing — واقف من إمبارح</div>
+        <div class="ai-card alert">6 تذاكر Support متأخرة أكتر من 24 ساعة</div>
+        <div class="ai-card">فريق الـ Sales في مسار جيد — معدل الإغلاق فوق المتوسط</div>
+      </div>
+    </div>`;
+}
+
+/** Hub-wide aggregation across every channel for one dimension (Meetings/Tasks/Pinned/Knowledge/Files). */
+function renderHubGlobalList(field, icon, label, textKey){
+  const rows = [];
+  CHANNEL_ORDER.filter(id=>!CHANNELS[id].dm).forEach(id=>{
+    (CHANNELS[id][field]||[]).forEach(item=>rows.push({channel: CHANNELS[id].name, item}));
+  });
+  document.getElementById('hub-main').innerHTML = `
+    <div class="hub-header"><div><div class="hub-title">${icon} ${label}</div><div class="hub-meta">مجمّعة من كل الأقسام في مكان واحد</div></div></div>
+    <div style="flex:1; overflow-y:auto; padding:20px 26px;">
+      ${rows.length ? rows.map(r=>`
+        <div class="card" style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+          <span class="badge b-neutral">${r.channel}</span>
+          <span style="font-size:12.5px; flex:1;">${r.item[textKey] || JSON.stringify(r.item)}</span>
+        </div>`).join("") : `<div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش ${label} لسه في أي قسم</div>`}
+    </div>`;
+}
+
+function renderHubArchive(){
+  document.getElementById('hub-main').innerHTML = `
+    <div class="hub-header"><div><div class="hub-title">🗄️ Archive</div><div class="hub-meta">القنوات والمحادثات المؤرشفة — Admin بس يقدر يرجعها</div></div></div>
+    <div style="flex:1; overflow-y:auto; padding:20px 26px;">
+      <div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش حاجة متأرشفة لحد دلوقتي</div>
+    </div>`;
+}
+
+function renderChannelWorkspace(channelId){
+  const ch = CHANNELS[channelId];
+  const isAdmin = true;
+  const tabs = [["chat","الشات"],["files","الملفات"],["tasks","المهام"],["meetings","الاجتماعات"],["pinned","المثبّت"],["knowledge","المعرفة"],["ai","AI"]];
+  document.getElementById('hub-main').innerHTML = `
+    <div class="hub-header">
+      <div>
+        <div class="hub-title">${ch.dm ? "💬" : "#"} ${ch.name} ${ch.locked ? '<span class="lock-badge">🔒 مقيّدة</span>' : ''}</div>
+        <div class="hub-meta">${ch.dm ? 'محادثة خاصة' : ch.members + ' أعضاء · ' + (ch.visibility==='private'?'خاصة':'عامة')} · كل رسالة هنا بتتحول لمعرفة دائمة للشركة</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost">🔍 بحث</button>
+        <button class="btn btn-ghost">👥 الأعضاء</button>
+        ${isAdmin ? `<button class="btn btn-ghost" onclick="openChannelAdmin('${channelId}')">⚙️ إدارة</button>` : ''}
+      </div>
+    </div>
+    <div class="tab-row" style="padding:0 26px;">
+      ${tabs.map(t=>`<button class="tab-btn ${collabTab===t[0]?'active':''}" onclick="switchCollabTab('${channelId}','${t[0]}')">${t[1]}</button>`).join("")}
+    </div>
+    <div style="flex:1; overflow-y:auto;" id="collab-tab-body"></div>`;
+  renderCollabTabBody(channelId);
+}
+
+function switchCollabTab(channelId, tab){ collabTab = tab; renderCollabTabBody(channelId); }
+
+function renderCollabTabBody(channelId){
+  const ch = CHANNELS[channelId];
+  const el = document.getElementById('collab-tab-body');
+  if(!el) return;
+
+  if(collabTab==='chat'){
+    el.innerHTML = `
+      <div class="hub-messages" style="padding:18px 26px;">
+        ${ch.messages.map(m=>`
+          <div class="msg-row">
+            <div class="msg-actions">
+              <span class="msg-action-btn" title="رد">↩️</span>
+              <span class="msg-action-btn" title="Thread">🧵</span>
+              <span class="msg-action-btn" title="React">🙂</span>
+              <span class="msg-action-btn" title="Mention">@</span>
+              <span class="msg-action-btn" title="حوّل لمهمة">✅</span>
+              <span class="msg-action-btn" title="حوّل لاجتماع">📅</span>
+              <span class="msg-action-btn" title="حوّل لـ SOP">📚</span>
+              <span class="msg-action-btn" title="Bookmark">🔖</span>
+              <span class="msg-action-btn" title="تثبيت">📌</span>
+              <span class="msg-action-btn" title="إعادة توجيه">↪️</span>
+              <span class="msg-action-btn" title="ملخص AI">🤖</span>
+            </div>
+            <div class="msg-avatar" style="background:${m.ai ? 'linear-gradient(135deg,#6366F1,#A855F7)' : m.color};">${m.ai ? '🤖' : m.author[0]}</div>
+            <div>
+              <div class="msg-author">${m.author} <span class="msg-time">${m.time}</span></div>
+              <div class="msg-bubble ${m.ai?'ai':''}" style="${m.voice?'border-color:rgba(122,115,255,.35);':''}">${m.text}</div>
+              ${m.task ? `<div class="msg-task-chip">✅ ${m.task}</div>` : ''}
+              ${m.autoAction ? `<div class="msg-task-chip" style="background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.3); color:#A5B4FC;">${m.autoAction}</div>` : ''}
+              ${m.thread ? `<div class="msg-thread-link">🧵 ${m.thread}</div>` : ''}
+              ${m.aiSuggestions ? `<div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">${m.aiSuggestions.map(s=>`<button class="btn btn-ghost" style="padding:4px 10px; font-size:10.5px; border-color:rgba(99,102,241,.3); color:#A5B4FC;">🤖 ${s}</button>`).join("")}</div>` : ''}
+            </div>
+          </div>`).join("")}
+      </div>
+      <div class="hub-composer">
+        <div class="composer-box">
+          <input class="composer-input" placeholder="${ch.locked ? 'اكتب رسالة لفريق الفاينانس والإدارة...' : 'اكتب رسالة لـ #' + ch.name + '...'}">
+          <div class="composer-toolbar">
+            <div class="composer-icon">📎</div>
+            <div class="composer-icon">🎙️</div>
+            <div class="composer-icon">@</div>
+            <div class="composer-icon">✅</div>
+            <button class="btn btn-primary" style="margin-right:auto;">إرسال</button>
+          </div>
+        </div>
+      </div>`;
+  }
+  else if(collabTab==='files'){
+    el.innerHTML = `<div style="padding:20px 26px;">` + (ch.files.length ? ch.files.map(f=>`
+      <div class="card" style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <div style="width:32px;height:32px;border-radius:9px;background:var(--surface-2); display:flex; align-items:center; justify-content:center;">📄</div>
+        <div style="flex:1;"><div style="font-size:12.5px;">${f.name}</div><div style="font-size:10.5px; color:var(--text-faint);">${f.size} · رفعه ${f.by}</div></div>
+        <button class="btn btn-ghost" style="padding:5px 10px; font-size:11px;">تحميل</button>
+      </div>`).join("") : `<div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش ملفات متبادلة هنا لسه</div>`) + `</div>`;
+  }
+  else if(collabTab==='tasks'){
+    el.innerHTML = `<div style="padding:20px 26px;">` + (ch.tasks.length ? ch.tasks.map(t=>`
+      <div class="card" style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <span style="width:16px;height:16px;border-radius:5px; border:2px solid var(--border); flex-shrink:0;"></span>
+        <div style="flex:1;"><div style="font-size:12.5px;">${t.label}</div><div style="font-size:10.5px; color:var(--text-faint);">مسؤول: ${t.assignee}</div></div>
+        <span class="badge b-warning">مفتوحة</span>
+      </div>`).join("") : `<div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش مهام مرتبطة بالقناة دي لسه</div>`) + `</div>`;
+  }
+  else if(collabTab==='meetings'){
+    el.innerHTML = `<div style="padding:20px 26px;">` + (ch.meetings.length ? ch.meetings.map(m=>`
+      <div class="card" style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <div style="width:32px;height:32px;border-radius:9px;background:var(--indigo-bg); display:flex; align-items:center; justify-content:center;">📅</div>
+        <div style="flex:1;"><div style="font-size:12.5px; font-weight:600;">${m.title}</div><div style="font-size:10.5px; color:var(--text-faint);">${m.time} · ${m.attendees}</div></div>
+      </div>`).join("") : `<div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش اجتماعات مجدولة من القناة دي</div>`) + `</div>`;
+  }
+  else if(collabTab==='pinned'){
+    el.innerHTML = `<div style="padding:20px 26px;">` + (ch.pinned.length ? ch.pinned.map(p=>`
+      <div class="card" style="margin-bottom:8px;"><div style="font-size:11px; color:var(--text-faint); margin-bottom:3px;">📌 ${p.author}</div><div style="font-size:12.5px;">${p.text}</div></div>`).join("") : `<div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش رسائل مثبّتة</div>`) + `</div>`;
+  }
+  else if(collabTab==='knowledge'){
+    el.innerHTML = `<div style="padding:20px 26px;">` + (ch.knowledge.length ? ch.knowledge.map(k=>`
+      <div class="card" style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <div style="width:32px;height:32px;border-radius:9px;background:var(--signal-bg); display:flex; align-items:center; justify-content:center;">📚</div>
+        <div style="flex:1;"><div style="font-size:12.5px; font-weight:600;">${k.title}</div><div style="font-size:10.5px; color:var(--text-faint);">اتضاف بواسطة ${k.addedBy} تلقائيًا من الشات</div></div>
+      </div>`).join("") : `<div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش معرفة اتستخرجت من القناة دي لسه</div>`) + `</div>`;
+  }
+  else if(collabTab==='ai'){
+    el.innerHTML = `<div style="padding:20px 26px;">
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:8px;">🤖 AI Summary</div>
+        <p style="font-size:12.5px; line-height:1.75; color:var(--text-dim);">${ch.aiSummary}</p>
+      </div>
+      <div class="card">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:8px;">💡 AI Suggestions</div>
+        ${ch.aiSuggestionsList.length ? ch.aiSuggestionsList.map(s=>`<div class="ai-card" style="margin-bottom:7px;">${s}</div>`).join("") : `<p style="font-size:12px; color:var(--text-faint);">مفيش توصيات جديدة دلوقتي.</p>`}
+      </div>
+    </div>`;
+  }
+}
+
+function openChannelAdmin(){ document.getElementById('channel-admin-overlay').classList.add('open'); }
+function closeChannelAdmin(){ document.getElementById('channel-admin-overlay').classList.remove('open'); }
+function toggleVisibility(id){
+  CHANNELS[id].visibility = CHANNELS[id].visibility==='private' ? 'public' : 'private';
+  CHANNELS[id].locked = CHANNELS[id].visibility==='private';
+  navigate(state.path);
+  openChannelAdmin();
+}
+/* ================= APPROVALS ================= */
+let APPROVALS_DATA = [
+  {id:1, title:"فاتورة مورد — Meta Ads", detail:"٨,٤٠٠ جنيه · Media Buying", status:"pending", icon:"F"},
+  {id:2, title:"عرض سعر عميل جديد — Nour Store", detail:"١٥,٠٠٠ جنيه · Sales", status:"pending", icon:"S"},
+  {id:3, title:"طلب إجازة — Ahmed (Dev)", detail:"٣ أيام، من ٢٩ يوليو", status:"pending", icon:"H"},
+  {id:4, title:"اعتماد محتوى — حملة أغسطس", detail:"Marketing", status:"pending", icon:"M"},
+  {id:5, title:"طلب استرجاع — Mona Beauty", detail:"١,٢٠٠ جنيه · Support", status:"pending", icon:"R"},
+  {id:6, title:"فاتورة استضافة سنوية", detail:"٤,٢٠٠ جنيه · Finance", status:"approved", icon:"F"},
+  {id:7, title:"طلب إجازة — Mennah (Design)", detail:"يوم واحد", status:"rejected", icon:"H"},
+];
+let approvalsTab = "pending";
+
+/* ================= ALERT CENTER ================= */
+/* An Alert != a Recommendation. Every alert here is produced by a specific
+   Automation Rule crossing a real threshold — never a free-floating AI
+   opinion (those live in the AI Copilot panel / department "Recommendations"). */
+const ALERTS_DATA = [
+  {severity:"critical", title:"معدل استرجاع مرتفع — Mona Beauty", triggerRule:"refundRisk > 15%", entity:"عميلة: Mona Beauty", since:"من 3 ساعات"},
+  {severity:"critical", title:"حملة بتخسر فلوس — Ramadan Launch", triggerRule:"ROAS < 1.5x لمدة 3 أيام متتالية", entity:"حملة: Ramadan Launch", since:"من يوم"},
+  {severity:"warning", title:"عميل غير نشط 7 أيام — Layla Studio", triggerRule:"lastActiveAt > 7 days", entity:"عميلة: Layla Studio", since:"من يومين"},
+  {severity:"warning", title:"موظف محمّل فوق طاقته — Omar", triggerRule:"openTasks > 8 لمدة أسبوع", entity:"موظف: Omar", since:"من 4 أيام"},
+  {severity:"warning", title:"قسم متأخر عن الخطة — Support", triggerRule:"onSchedule% < 70%", entity:"قسم: Support", since:"من يوم"},
+  {severity:"warning", title:"مشكلة تدفق نقدي محتملة", triggerRule:"forecastedCashflow < 0 خلال 30 يوم", entity:"Finance", since:"من ساعتين"},
+  {severity:"warning", title:"SLA اتخطى الحد المسموح — تذكرة #4021", triggerRule:"responseTime > SLA threshold", entity:"Support", since:"من 5 ساعات"},
+];
+function renderAlertCenter(){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade">
+      <div class="page-title">Alert Center</div>
+      <div class="page-sub">تنبيهات حرجة بس — كل واحد ناتج من قاعدة أتمتة حقيقية اتخطت حد معين، مش رأي من الـ AI</div>
+    </div>
+    <div class="page-body fade">
+      <div class="grid g2" style="margin-bottom:14px;">
+        <div class="card"><div class="kpi-label">تنبيهات حرجة</div><div class="kpi-value" style="color:#F87171;">${ALERTS_DATA.filter(a=>a.severity==='critical').length}</div></div>
+        <div class="card"><div class="kpi-label">تنبيهات تحذيرية</div><div class="kpi-value" style="color:var(--amber);">${ALERTS_DATA.filter(a=>a.severity==='warning').length}</div></div>
+      </div>
+      <div class="card" style="padding:6px;">
+        ${ALERTS_DATA.map(a=>`
+          <div class="row-item" style="padding:12px;">
+            <span style="font-size:16px;">${a.severity==='critical'?'🔴':'🟡'}</span>
+            <div style="flex:1;">
+              <div style="font-size:12.5px; font-weight:600;">${a.title}</div>
+              <div style="font-size:10.5px; color:var(--text-faint); margin-top:2px;">مصدر التنبيه: <span class="mono">${a.triggerRule}</span> · ${a.entity}</div>
+            </div>
+            <span style="font-size:10.5px; color:var(--text-faint);">${a.since}</span>
+            <button class="btn btn-ghost" style="padding:5px 10px; font-size:10.5px;">تم الحل</button>
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+
+
+function renderApprovals(){
+  document.getElementById('content').innerHTML = `
+      <div class="page-sub">كل قرار محتاج توقيعك، في مكان واحد</div>
+      <div class="tab-row">
+        <button class="tab-btn ${approvalsTab==='pending'?'active':''}" onclick="switchApprovalsTab('pending')">معلّقة (${APPROVALS_DATA.filter(a=>a.status==='pending').length})</button>
+        <button class="tab-btn ${approvalsTab==='approved'?'active':''}" onclick="switchApprovalsTab('approved')">معتمدة</button>
+        <button class="tab-btn ${approvalsTab==='rejected'?'active':''}" onclick="switchApprovalsTab('rejected')">مرفوضة</button>
+      </div>
+    </div>
+    <div class="page-body fade" id="approvals-body"></div>`;
+  renderApprovalsList();
+}
+function switchApprovalsTab(t){ approvalsTab = t; renderApprovals(); }
+function renderApprovalsList(){
+  const items = APPROVALS_DATA.filter(a=>a.status===approvalsTab);
+  const el = document.getElementById('approvals-body');
+  if(items.length===0){
+    el.innerHTML = `<div class="card" style="text-align:center; padding:40px; color:var(--text-faint); font-size:12.5px;">مفيش عناصر هنا دلوقتي</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="card" style="padding:6px;">` + items.map(a=>`
+    <div class="row-item" style="padding:12px;">
+      <div class="avatar-sm" style="background:var(--grad-primary); width:34px; height:34px; border-radius:10px;">${a.icon}</div>
+      <div style="flex:1;"><div style="font-size:13px; font-weight:600;">${a.title}</div><div style="font-size:11px; color:var(--text-faint); margin-top:2px;">${a.detail}</div></div>
+      ${a.status==='pending' ? `
+        <button class="btn btn-ghost" style="border-color:rgba(248,113,113,.3); color:#F87171;" onclick="decideApproval(${a.id},'rejected')">رفض</button>
+        <button class="btn btn-primary" onclick="decideApproval(${a.id},'approved')">اعتماد</button>
+      ` : `<span class="badge ${a.status==='approved'?'b-success':'b-critical'}">${a.status==='approved'?'اتاعتمدت':'اترفضت'}</span>`}
+    </div>`).join("") + `</div>`;
+}
+function decideApproval(id, status){
+  const item = APPROVALS_DATA.find(a=>a.id===id);
+  if(item) item.status = status;
+  renderApprovalsList();
+  renderApprovals(); // refresh tab counts
+}
+
+/* ================= COMPANY TIMELINE ================= */
+const TIMELINE_EVENTS = [
+  {type:"payment", icon:"💰", label:"دفعة اتقبضت من Khaled Fitness — ١٨,٠٠٠ جنيه", time:"من ساعة"},
+  {type:"call", icon:"📞", label:"مكالمة Kickoff مع عميل جديد — Layla Studio", time:"من 3 ساعات"},
+  {type:"approval", icon:"✅", label:"محمد جو اعتمد فاتورة Meta Ads", time:"من 4 ساعات"},
+  {type:"launch", icon:"🚀", label:"إطلاق حملة Khaled Fitness Ramadan", time:"إمبارح"},
+  {type:"task", icon:"📋", label:"Omar خلّص مهمة: اعتماد استراتيجية سارة", time:"إمبارح"},
+  {type:"message", icon:"💬", label:"رسالة جديدة من Ahmed في # Development", time:"إمبارح"},
+  {type:"customer", icon:"👤", label:"عميلة جديدة اتسجلت: Mona Beauty", time:"من يومين"},
+  {type:"payment", icon:"💰", label:"فاتورة اتبعتت لـ Nour Store — ١٥,٠٠٠ جنيه", time:"من 3 أيام"},
+  {type:"launch", icon:"🚀", label:"إطلاق صفحة الهبوط لعميل Sara Hossam", time:"من 4 أيام"},
+];
+const TIMELINE_FILTERS = [["all","الكل"],["payment","مدفوعات"],["call","مكالمات"],["launch","إطلاقات"],["task","مهام"],["customer","عملاء"]];
+let timelineFilter = "all";
+
+function renderCompanyTimeline(){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade">
+      <div class="page-title">Company Timeline</div>
+      <div class="page-sub">كل حاجة حصلت في الشركة، بالترتيب الزمني</div>
+      <div style="display:flex; gap:6px; margin-top:16px; flex-wrap:wrap;">
+        ${TIMELINE_FILTERS.map(f=>`<button class="btn ${timelineFilter===f[0]?'btn-primary':'btn-ghost'}" style="padding:6px 12px;" onclick="setTimelineFilter('${f[0]}')">${f[1]}</button>`).join("")}
+      </div>
+    </div>
+    <div class="page-body fade" id="timeline-body"></div>`;
+  renderTimelineList();
+}
+function setTimelineFilter(f){ timelineFilter = f; renderTimelineList(); }
+function renderTimelineList(){
+  const events = timelineFilter==='all' ? TIMELINE_EVENTS : TIMELINE_EVENTS.filter(e=>e.type===timelineFilter);
+  document.getElementById('timeline-body').innerHTML = `
+    <div class="card">
+      <div style="position:relative; padding-right:6px;">
+        <div style="position:absolute; right:15px; top:4px; bottom:4px; width:1px; background:var(--border);"></div>
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          ${events.map(e=>`
+            <div style="position:relative; display:flex; align-items:flex-start; gap:14px;">
+              <div style="width:30px;height:30px;border-radius:9px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; z-index:1;">${e.icon}</div>
+              <div><div style="font-size:13px;">${e.label}</div><div style="font-size:10.5px; color:var(--text-faint); margin-top:2px;">${e.time}</div></div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ================= EXECUTIVE REPORTS ================= */
+const REPORTS = [
+  {title:"تقرير الإيرادات الشهري", desc:"تفصيل كامل للإيرادات حسب المصدر والمنتج", icon:"💰", accent:"accent-lime"},
+  {title:"أداء المبيعات", desc:"معدلات الإغلاق، الـ pipeline، وأداء الفريق", icon:"📈", accent:"accent-sky"},
+  {title:"أداء التسويق والحملات", desc:"ROAS، تكلفة الاكتساب، وأداء كل حملة", icon:"📣", accent:"accent-lilac"},
+  {title:"أداء الأقسام", desc:"مقارنة شاملة بين كل الأقسام التسعة", icon:"🏢", accent:"accent-peach"},
+  {title:"صحة العملاء", desc:"تقدم الرحلة، رضا العملاء، ونسب التعثر", icon:"👥", accent:"accent-lime"},
+  {title:"أداء الفريق", desc:"درجات الأداء، الإنتاجية، والمهام المتأخرة", icon:"🧑‍💼", accent:"accent-sky"},
+];
+let execReportPeriod = "daily";
+const EXEC_REPORT_METRICS = {
+  daily: [["إيرادات اليوم","19,400 ج"],["مبيعات اليوم","3 صفقات"],["عملاء جدد","1"],["تذاكر دعم مفتوحة","14"]],
+  weekly: [["إيرادات الأسبوع","112,800 ج"],["ربح الأسبوع","64,200 ج"],["نمو العملاء","+6"],["طلبات استرجاع","1"]],
+  monthly: [["الإيرادات","482,300 ج"],["الربح","283,900 ج"],["معدل الاحتفاظ بالعملاء","91%"],["Churn","4%"]],
+};
+function switchExecPeriod(p){ execReportPeriod = p; renderExecutiveReports(); }
+
+function renderExecutiveReports(){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade"><div class="page-title">Executive Reports</div><div class="page-sub">تقرير تنفيذي واحد بمدى زمني مختلف — نفس المنطق، مش 3 أنظمة منفصلة</div></div>
+    <div class="page-body fade">
+      <div class="card" style="margin-bottom:16px;">
+        <div class="tab-row" style="margin-top:0; margin-bottom:14px;">
+          <button class="tab-btn ${execReportPeriod==='daily'?'active':''}" onclick="switchExecPeriod('daily')">يومي</button>
+          <button class="tab-btn ${execReportPeriod==='weekly'?'active':''}" onclick="switchExecPeriod('weekly')">أسبوعي</button>
+          <button class="tab-btn ${execReportPeriod==='monthly'?'active':''}" onclick="switchExecPeriod('monthly')">شهري</button>
+        </div>
+        <div class="grid g4" style="margin-bottom:14px;">
+          ${EXEC_REPORT_METRICS[execReportPeriod].map(m=>`<div class="card"><div class="kpi-label">${m[0]}</div><div class="kpi-value" style="font-size:19px;">${m[1]}</div></div>`).join("")}
+        </div>
+        <div style="background:var(--indigo-bg); border-radius:12px; padding:12px 14px;">
+          <div style="font-size:11px; font-weight:700; color:#A5B4FC; margin-bottom:4px;">🤖 ملخص الـ CEO Agent</div>
+          <p style="font-size:12px; color:var(--text-dim); line-height:1.7;">مولّد من نفس الأرقام اللي فوق بالظبط — الـ Agent بيكتب الملخص بس، مش بيخترع رقم.</p>
+        </div>
+      </div>
+
+      <div style="font-size:12.5px; font-weight:600; margin-bottom:10px;">تقارير تفصيلية</div>
+      <div class="grid g3">
+        ${REPORTS.map(r=>`
+          <div class="card ${r.accent}" style="border:none; box-shadow:none;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:16px; margin-bottom:10px;">${r.icon}</div>
+            <div style="font-size:13px; font-weight:700;">${r.title}</div>
+            <div style="font-size:11px; color:var(--text-dim); margin-top:4px; line-height:1.6;">${r.desc}</div>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+              <button class="btn btn-ghost" style="padding:5px 11px; font-size:11px;">عرض</button>
+              <button class="btn btn-ghost" style="padding:5px 11px; font-size:11px;">⬇ PDF</button>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+const ROLES = ["Owner","Admin","Manager","Employee","Customer"];
+const PERMISSIONS = ["عرض التقارير","إدارة العملاء","إدارة الأتمتة","اعتماد المدفوعات المالية","إدارة الفريق","إدارة AI Agents"];
+const PERMISSION_MATRIX = {
+  "Owner":     [1,1,1,1,1,1],
+  "Admin":     [1,1,1,0,1,1],
+  "Manager":   [1,1,0,0,0,0],
+  "Employee":  [0,0,0,0,0,0],
+  "Customer":  [0,0,0,0,0,0],
+};
+let settingsTab = "roles";
+
+function renderSettings(){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade">
+      <div class="page-title">Settings</div>
+      <div class="page-sub">إعدادات الشركة، الصلاحيات، والمظهر</div>
+      <div class="tab-row">
+        <button class="tab-btn ${settingsTab==='roles'?'active':''}" onclick="switchSettingsTab('roles')">Roles & Permissions</button>
+        <button class="tab-btn ${settingsTab==='theme'?'active':''}" onclick="switchSettingsTab('theme')">Theme</button>
+        <button class="tab-btn ${settingsTab==='general'?'active':''}" onclick="switchSettingsTab('general')">General</button>
+      </div>
+    </div>
+    <div class="page-body fade" id="settings-body"></div>`;
+  renderSettingsTab();
+}
+
+function switchSettingsTab(tab){ settingsTab = tab; renderSettings(); }
+
+function renderSettingsTab(){
+  const el = document.getElementById('settings-body');
+  if(settingsTab==='roles'){
+    el.innerHTML = `
+      <div class="card" style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead>
+            <tr>
+              <th style="text-align:right; padding:8px; color:var(--text-faint); font-weight:600;">الصلاحية</th>
+              ${ROLES.map(r=>`<th style="text-align:center; padding:8px; color:var(--text-dim); font-weight:700;">${r}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${PERMISSIONS.map((perm,pi)=>`
+              <tr style="border-top:1px solid var(--border-soft);">
+                <td style="padding:10px 8px;">${perm}</td>
+                ${ROLES.map((role,ri)=>{
+                  const checked = PERMISSION_MATRIX[role][pi];
+                  return `<td style="text-align:center; padding:10px 8px;">
+                    <span onclick="togglePermission(${pi},${ri})" style="display:inline-flex; width:18px;height:18px;border-radius:6px; cursor:pointer; align-items:center; justify-content:center; background:${checked?'var(--grad-primary)':'rgba(255,255,255,.06)'}; border:1px solid ${checked?'transparent':'var(--border)'}; color:#fff; font-size:11px;">${checked?'✓':''}</span>
+                  </td>`;
+                }).join("")}
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:11px; color:var(--text-faint); margin-top:10px;">Owner دايمًا كل الصلاحيات متاحة له ومش قابلة للتعديل. باقي الأدوار قابلة للتخصيص بالكامل.</p>`;
+  }
+  else if(settingsTab==='theme'){
+    el.innerHTML = `
+      <div class="grid g2">
+        <div class="card">
+          <div style="font-size:13px; font-weight:700; margin-bottom:12px;">وضع العرض</div>
+          <div style="display:flex; gap:10px;">
+            <div onclick="setThemeMode('dark')" style="flex:1; border-radius:12px; padding:14px; background:#0F1420; border:2px solid ${document.documentElement.classList.contains('light')?'var(--border)':'var(--indigo)'}; cursor:pointer; text-align:center;">
+              <div style="width:100%;height:36px;border-radius:8px;background:#1A2030; margin-bottom:8px;"></div>
+              <span style="font-size:12px; color:#fff;">داكن</span>
+            </div>
+            <div onclick="setThemeMode('light')" style="flex:1; border-radius:12px; padding:14px; background:#F6F9FC; border:2px solid ${document.documentElement.classList.contains('light')?'var(--indigo)':'rgba(255,255,255,.15)'}; cursor:pointer; text-align:center;">
+              <div style="width:100%;height:36px;border-radius:8px;background:#fff; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,.1);"></div>
+              <span style="font-size:12px; color:#1A1F36;">فاتح</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px; font-weight:700; margin-bottom:12px;">لون الـ Accent</div>
+          <div style="display:flex; gap:10px;">
+            ${[["indigo","#6366F1","#A855F7"],["emerald","#10B981","#22D3EE"],["rose","#F43F5E","#F59E0B"],["amber","#F59E0B","#F43F5E"]].map(c=>`
+              <div onclick="setAccent('${c[1]}','${c[2]}')" style="width:38px;height:38px;border-radius:11px; cursor:pointer; background:linear-gradient(135deg,${c[1]},${c[2]}); border:2px solid rgba(255,255,255,.2);"></div>
+            `).join("")}
+          </div>
+        </div>
+      </div>`;
+  }
+  else{
+    el.innerHTML = `<div class="card"><div style="font-size:13px; font-weight:700; margin-bottom:8px;">اسم الشركة</div>
+      <input value="Mohamed Joe Co." style="width:100%; max-width:320px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:11px; padding:9px 12px; color:var(--text); font-size:13px;"></div>`;
+  }
+}
+
+function togglePermission(pi,ri){
+  if(ROLES[ri]==="Owner") return;
+  PERMISSION_MATRIX[ROLES[ri]][pi] = PERMISSION_MATRIX[ROLES[ri]][pi] ? 0 : 1;
+  renderSettingsTab();
+}
+
+function setThemeMode(mode){
+  document.documentElement.classList.toggle('light', mode==='light');
+  renderSettingsTab();
+}
+function setAccent(c1,c2){
+  document.documentElement.style.setProperty('--indigo', c1);
+  document.documentElement.style.setProperty('--grad-primary', `linear-gradient(135deg,${c1},${c2})`);
+}
+
+function renderSimplePage(title, desc){
+  document.getElementById('content').innerHTML = `
+    <div class="page-header fade"><div class="page-title">${title}</div><div class="page-sub">${desc}</div></div>
+    <div class="page-body fade">
+      <div class="card" style="text-align:center; padding:50px 20px; color:var(--slate); font-size:12.5px;">
+        الـ workspace الكامل للصفحة دي هيتصمم في جولة مراجعة منفصلة بعد اعتماد الـ Information Architecture.
+      </div>
+    </div>`;
+}
+
+/* ================= AI PANEL ================= */
+function renderAI(customerId){
+  const header = document.getElementById('ai-subtitle');
+  if(customerId && CUSTOMERS[customerId]){
+    const c = CUSTOMERS[customerId];
+    if(header) header.textContent = `سياق: ${c.name}`;
+    document.getElementById('ai-body').innerHTML =
+      '<div class="ai-section-title">في سياق ' + c.name + '</div>'+
+      '<div class="ai-card">وصلت ' + c.progress + '% من رحلتها — في مرحلة ' + c.stage + '.</div>'+
+      '<div class="ai-section-title">إجراءات سريعة لهذا العميل</div>'+
+      '<button class="btn btn-ghost" style="width:100%; margin-bottom:6px; text-align:right;">📝 لخّص آخر تفاعل معاها</button>'+
+      '<button class="btn btn-ghost" style="width:100%; text-align:right;">✅ اقترح خطوة جاية</button>'+
+      '<div class="ai-section-title">رجوع</div>'+
+      '<button class="btn btn-ghost" style="width:100%; text-align:right;" onclick="renderAI()">↩ سياق الشركة العام</button>';
+    return;
+  }
+  if(header) header.textContent = 'شريكك في تشغيل الشركة';
+  document.getElementById('ai-body').innerHTML =
+    '<div class="ai-section-title">تنبيهات محتاجة انتباهك</div>'+
+    '<div class="ai-card critical">حملة Ramadan Launch بتحرق ميزانية بلا نتيجة</div>'+
+    '<div class="ai-card alert">6 تذاكر Support متأخرة أكتر من 24 ساعة</div>'+
+    '<div class="ai-section-title">توصيات</div>'+
+    '<div class="ai-card">قصّري مدة مرحلة Brand Discovery — العملاء بيخلصوها أسرع بـ 30%</div>'+
+    '<div class="ai-section-title">إجراءات سريعة</div>'+
+    '<button class="btn btn-ghost" style="width:100%; margin-bottom:6px; text-align:right;">📝 لخّص أداء الأسبوع</button>'+
+    '<button class="btn btn-ghost" style="width:100%; text-align:right;">📊 جهّز تقرير المبيعات الشهري</button>';
+}
+function toggleAI(){ document.getElementById('ai-panel').classList.toggle('collapsed'); }
+
+function showOrgPicker(){
+  document.getElementById('boot-login').style.display = 'none';
+  const orgs = document.getElementById('boot-orgs');
+  orgs.style.display = 'flex';
+}
+
+function enterApp(){
+  document.getElementById('boot-orgs').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+  navigate(["mission-control"]);
+  renderAI();
+}
+
+/* ================= COMMAND PALETTE ================= */
+const PALETTE_INDEX = [
+  {group:"صفحات", label:"Mission Control", path:["mission-control"]},
+  {group:"صفحات", label:"AI Brain", path:["ai-brain"]},
+  {group:"AI Agents", label:"CEO AI", path:["ai-brain","ceo"]},
+  {group:"AI Agents", label:"Sales Executive AI", path:["ai-brain","sales"]},
+  {group:"AI Agents", label:"Marketing & Media Buyer AI", path:["ai-brain","marketing"]},
+  {group:"AI Agents", label:"Finance AI", path:["ai-brain","finance"]},
+  {group:"AI Agents", label:"Client Success AI", path:["ai-brain","client_success"]},
+  {group:"AI Agents", label:"Client Setup Specialist AI", path:["ai-brain","client_setup"]},
+  {group:"صفحات", label:"Approvals", path:["approvals"]},
+  {group:"صفحات", label:"Alert Center", path:["alerts"]},
+  {group:"صفحات", label:"Company Timeline", path:["timeline"]},
+  {group:"صفحات", label:"Knowledge Base", path:["knowledge"]},
+  {group:"صفحات", label:"Automation Center", path:["automations"]},
+  {group:"صفحات", label:"Finance", path:["finance-hq"]},
+  {group:"صفحات", label:"Executive Reports", path:["reports"]},
+  {group:"صفحات", label:"Settings", path:["settings"]},
+  {group:"العملاء", label:"Sara Hossam", path:["customers","sara"]},
+  {group:"العملاء", label:"Nour Store", path:["customers","nour"]},
+  {group:"العملاء", label:"Khaled Fitness", path:["customers","khaled"]},
+  {group:"العملاء", label:"Mona Beauty", path:["customers","mona"]},
+  {group:"الأقسام", label:"Marketing OS", path:["departments","Marketing"]},
+  {group:"الأقسام", label:"Sales OS", path:["departments","Sales"]},
+  {group:"الأقسام", label:"Support OS", path:["departments","Support"]},
+  {group:"الأقسام", label:"Finance OS", path:["departments","Finance"]},
+  {group:"الأقسام", label:"Client Success OS", path:["departments","Client Success"]},
+  {group:"الموظفين", label:"Omar — Strategy", path:["employees","omar"]},
+  {group:"الموظفين", label:"Ahmed — Dev", path:["employees","ahmed"]},
+  {group:"Collaboration Hub", label:"# Marketing", path:["collab","ch-marketing"]},
+  {group:"Collaboration Hub", label:"# Support", path:["collab","ch-support"]},
+  {group:"Collaboration Hub", label:"# Finance 🔒", path:["collab","ch-finance"]},
+];
+
+function openPalette(){
+  document.getElementById('palette-overlay').classList.add('open');
+  const input = document.getElementById('palette-input');
+  input.value = "";
+  filterPalette("");
+  setTimeout(()=>input.focus(), 30);
+}
+function closePalette(){
+  document.getElementById('palette-overlay').classList.remove('open');
+}
+function filterPalette(q){
+  const query = q.trim().toLowerCase();
+  const results = PALETTE_INDEX.filter(i => !query || i.label.toLowerCase().includes(query));
+  const groups = {};
+  results.forEach(r=>{ (groups[r.group] = groups[r.group]||[]).push(r); });
+  const el = document.getElementById('palette-results');
+  if(results.length===0){
+    el.innerHTML = `<div style="padding:24px; text-align:center; font-size:12.5px; color:var(--text-faint);">مفيش نتائج</div>`;
+    return;
+  }
+  el.innerHTML = Object.entries(groups).map(([group,items])=>`
+    <div class="palette-group">${group}</div>
+    ${items.map(i=>`<div class="palette-item" onclick='paletteGo(${JSON.stringify(i.path)})'>
+      <span class="ico">→</span><span>${i.label}</span>
+    </div>`).join("")}
+  `).join("");
+}
+function paletteGo(path){
+  closePalette();
+  navigate(path);
+}
+document.addEventListener('keydown', function(e){
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openPalette(); }
+  if(e.key === 'Escape') closePalette();
+});
+
+/* ================= QUICK ACTIONS ================= */
+const QUICK_ACTIONS = [
+  {icon:"📋", label:"إنشاء مهمة جديدة", action:()=>navigate(["automations"])},
+  {icon:"👤", label:"إضافة عميل جديد", action:()=>navigate(["customers"])},
+  {icon:"✅", label:"مراجعة الموافقات المعلّقة", action:()=>navigate(["approvals"])},
+  {icon:"📊", label:"توليد تقرير جديد", action:()=>navigate(["reports"])},
+  {icon:"📣", label:"إرسال إعلان للفريق", action:()=>navigate(["collab","ch-announce"])},
+];
+function toggleQuickActions(){
+  const el = document.getElementById('qa-dropdown');
+  const isOpen = el.classList.contains('open');
+  document.getElementById('notif-dropdown').classList.remove('open');
+  el.classList.toggle('open');
+  if(!isOpen){
+    el.innerHTML = `<div class="notif-header">إجراء سريع</div>` + QUICK_ACTIONS.map((a,i)=>`
+      <div class="notif-item" onclick="runQuickAction(${i})">
+        <div class="notif-ico" style="background:var(--indigo-bg);">${a.icon}</div>
+        <div style="flex:1; display:flex; align-items:center;"><div style="font-size:12.5px;">${a.label}</div></div>
+      </div>`).join("");
+  }
+}
+function runQuickAction(i){
+  document.getElementById('qa-dropdown').classList.remove('open');
+  QUICK_ACTIONS[i].action();
+}
+
+/* ================= NOTIFICATIONS ================= */
+const NOTIFICATIONS = [
+  {icon:"🔴", bg:"var(--red-bg)", title:"طلب استرجاع جديد — Mona Beauty", time:"من 12 دقيقة"},
+  {icon:"✅", bg:"var(--signal-bg)", title:"Sara Hossam خلصت مرحلة معلومات البيزنس", time:"من ساعة"},
+  {icon:"⚠️", bg:"var(--amber-bg)", title:"حملة Ramadan Launch تحت المتوسط", time:"من 3 ساعات"},
+  {icon:"💬", bg:"var(--indigo-bg)", title:"Omar منشنك في # Marketing", time:"من 4 ساعات"},
+  {icon:"📈", bg:"var(--signal-bg)", title:"إيرادات الشهر تجاوزت الهدف", time:"إمبارح"},
+];
+function toggleNotifications(){
+  const el = document.getElementById('notif-dropdown');
+  const isOpen = el.classList.contains('open');
+  el.classList.toggle('open');
+  if(!isOpen){
+    el.innerHTML = `<div class="notif-header">الإشعارات</div>` + NOTIFICATIONS.map(n=>`
+      <div class="notif-item">
+        <div class="notif-ico" style="background:${n.bg};">${n.icon}</div>
+        <div style="flex:1;"><div style="font-size:12.5px;">${n.title}</div><div style="font-size:10.5px; color:var(--text-faint); margin-top:2px;">${n.time}</div></div>
+      </div>`).join("");
+  }
+}
+document.addEventListener('click', function(e){
+  const dropdown = document.getElementById('notif-dropdown');
+  const qa = document.getElementById('qa-dropdown');
+  if(dropdown && dropdown.classList.contains('open') && !e.target.closest('.icon-btn')){
+    dropdown.classList.remove('open');
+  }
+  if(qa && qa.classList.contains('open') && !e.target.closest('.icon-btn')){
+    qa.classList.remove('open');
+  }
+});
+
+/* ================= INIT ================= */
+/* Boot flow starts at Login; the app shell stays hidden until enterApp() runs. */
+</script>
+</body>
+</html>

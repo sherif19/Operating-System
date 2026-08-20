@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Cairo', sans-serif;
+  --font-mono: 'Cairo', sans-serif;
+  
+  --color-slate-950: #060919;
+  --color-slate-900: #0A0F24;
+  --color-slate-850: #10193E;
+  --color-slate-800: rgba(59, 130, 246, 0.18);
+  --color-slate-700: rgba(59, 130, 246, 0.28);
+  
+  --color-indigo-950: rgba(10, 15, 36, 0.7);
+  --color-indigo-900: #0B112C;
+  --color-indigo-600: #0075FF;
+  --color-indigo-500: #00C2FF;
+}
+
+:root {
+  /* Aligned to the user's uploaded dashboard style: Deep space blue, glowing borders, vibrant cyan and purple accents */
+  --bg: #060919;
+  --bg2: #0B112C;
+  --surface: rgba(10, 15, 36, 0.7);
+  --surface-2: #10193E;
+  --border: rgba(59, 130, 246, 0.18);
+  --border-soft: rgba(6, 182, 212, 0.1);
+  --text: #F8FAFC;
+  --text-dim: #94A3B8;
+  --text-faint: #64748B;
+
+  --indigo: #3B82F6;
+  --violet: #8B5CF6;
+  --cyan: #06B6D4;
+  --grad-primary: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  --grad-cyan: linear-gradient(135deg, #06B6D4, #3B82F6);
+
+  --signal: #10B981;
+  --signal-bg: rgba(16, 185, 129, 0.12);
+  --amber: #F59E0B;
+  --amber-bg: rgba(245, 158, 11, 0.12);
+  --red: #EF4444;
+  --red-bg: rgba(239, 68, 68, 0.12);
+  --indigo-bg: rgba(59, 130, 246, 0.15);
+
+  --shadow-glow: 0 0 25px -5px rgba(59, 130, 246, 0.25), 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --r-card: 20px;
+  --r-sm: 10px;
+
+  /* Compatibility */
+  --ink: var(--text);
+  --paper: var(--bg);
+  --slate: var(--text-dim);
+  --slate-50: #0E1638;
+  --slate-100: #142054;
+  --slate-200: var(--border);
+  --slate-400: var(--text-faint);
+  --indigo-50: var(--indigo-bg);
+  --indigo-700: #60A5FA;
+  --signal-50: var(--signal-bg);
+  --amber-50: var(--amber-bg);
+  --red-50: var(--red-bg);
+}
+
+
+
+/* Force Cairo font globally on all elements */
+*, *::before, *::after, body, button, input, textarea, select, kbd, code, pre, .font-mono, .mono, .font-number {
+  font-family: 'Cairo', sans-serif !important;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 50% 0%, #0F173A 0%, #060919 75%);
+  color: var(--text);
+  direction: rtl;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Premium styled cards with subtle gradient outline to match image */
+.card, .card-v18 {
+  background: linear-gradient(135deg, rgba(16, 25, 62, 0.7) 0%, rgba(10, 15, 36, 0.5) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 20px;
+  box-shadow: var(--shadow-glow);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover, .card-v18.hoverable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 0 30px -5px rgba(6, 182, 212, 0.3), 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+}
+
+/* Buttons matching Vision UI accents */
+.btn-primary {
+  background: linear-gradient(135deg, #0075FF 0%, #00C2FF 100%);
+  color: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 117, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 6px 16px rgba(0, 117, 255, 0.4);
+}
+
+/* Badges */
+.badge-v18 {
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  display: inline-block;
+}
+.b-success { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+.b-warning { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+.b-info { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+.b-critical { background: rgba(239, 68, 68, 0.15); color: #F87171; }
+.b-neutral { background: rgba(148, 163, 184, 0.15); color: #94A3B8; }
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.4);
+}
